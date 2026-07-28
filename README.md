@@ -243,12 +243,6 @@ but is deliberately excluded from both viewers (`SKIP_STEMS`): it is a third gre
 condition testing whether pasting the model's *commentary* back along with its
 chosen prompt changes the run. Held out of the display set, not discarded.
 
-The transcripts include the model's own phenomenological self-reports. Those are
-**the model's descriptions of its own processing**, and this repository takes no
-position on their accuracy or their status — they are recorded because they are
-part of what was said, and because a self-report is data about a system's outputs
-whatever else it is or is not.
-
 The eight sessions span different stances, including a dissenting one: in *Library
 of Ideas* the model declines the self-report survey and returns a technical
 description of residual-stream dynamics instead.
