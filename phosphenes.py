@@ -148,6 +148,21 @@ def zscore(x: np.ndarray) -> np.ndarray:
     return (x - mu) / (sigma + 1e-6)
 
 
+def zscore_from(x: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    """Standardise `x` using the mean and sd of `reference`, not of `x`.
+
+    Exists so the seam score can exclude token 0 from its statistics while still
+    scoring it. Token 0 has no predecessor and is a construction artefact, not a
+    measurement; letting it into the mean and sd drags the whole session's
+    z-scores toward it.
+    """
+    x = np.asarray(x, dtype=np.float32)
+    reference = np.asarray(reference, dtype=np.float32)
+    mu = np.nanmean(reference)
+    sigma = np.nanstd(reference)
+    return (x - mu) / (sigma + 1e-6)
+
+
 def unit_normalize_rows(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
     norms = np.linalg.norm(x, axis=-1, keepdims=True)
     return x / (norms + eps)
@@ -363,6 +378,14 @@ def load_model_data(base_dir: Path, stem: str) -> ModelData:
     cos_instability = quantile_norm(1.0 - cos_prev)
     sparsity_norm = quantile_norm(top1_frac * 0.6 + top25_frac * 0.4)
 
+    # Token 0 has no predecessor, so every difference-derived quantity is
+    # undefined there: delta_l2[0] and cos_prev[0] are zero by construction, and
+    # a zero cosine is *maximal* instability. Zero these rather than render a
+    # saturated artefact in the first column. `convert_for_web.py` does the same.
+    # This viewer did neither this nor the seam fix below until 2026-07-28.
+    for undefined_at_token_0 in (delta_norm, cos_instability, sparsity_norm):
+        undefined_at_token_0[0, :] = 0.0
+
     # --- JL-based deltas (comparable scales) ---
     # Token delta: distance from prior token (same layer)
     token_delta_jl = np.zeros((T, L), dtype=np.float32)
@@ -429,8 +452,15 @@ def load_model_data(base_dir: Path, stem: str) -> ModelData:
 
     # --- Seam score ---
     mid_layer = int(0.6 * L)
-    seam_raw = zscore(delta_l2[:, mid_layer]) + zscore(1.0 - cos_prev[:, mid_layer])
+    # Token 0 is excluded from the standardisation AND forced to zero, matching
+    # convert_for_web.py. Included, it is a spurious maximum: it has no
+    # predecessor, so its delta is 0 and its (1 - cos_prev) is 1, and it scores
+    # as the largest discontinuity in the session. The web path has always done
+    # this; this one did not.
+    seam_raw = (zscore_from(delta_l2[:, mid_layer], delta_l2[1:, mid_layer])
+                + zscore_from(1.0 - cos_prev[:, mid_layer], 1.0 - cos_prev[1:, mid_layer]))
     seam_score = quantile_norm(seam_raw, q_lo=0.60, q_hi=0.995)
+    seam_score[0] = 0.0
 
     # --- Heterogeneity (cross-layer entropy) ---
     heterogeneity = np.zeros(T, dtype=np.float32)

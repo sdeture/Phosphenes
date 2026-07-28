@@ -146,9 +146,26 @@ def extract_batch(model, input_ids, jl_matrix, device):
     else:
         raise RuntimeError("Could not find final norm layer")
 
+    # NOTE ON INDEXING — this bit is easy to get wrong and was, once.
+    #
+    # `hidden_states` has L+1 entries: [0] is the embedding output, [1..L-1] are
+    # the RAW outputs of blocks 0..L-2, and [L] is the output of block L-1
+    # ALREADY PASSED THROUGH `self.norm`, because HuggingFace appends it after
+    # the final norm runs outside the block loop.
+    #
+    # So `hidden_states[l+1]` is a raw residual stream for l < L-1, and a
+    # normalised one for l == L-1. The logit lens must therefore skip its own
+    # `final_norm` on the last iteration, or it normalises twice: verified on
+    # Qwen3-0.6B, double-normalising moves mean entropy 2.151 -> 0.981 nats and
+    # the logits by up to 24.9.
+    #
+    # The February 2026 extraction in `data/` predates this fix and has the
+    # defect in `logit_lens_entropy[:, L-1]`. It is repaired on read by
+    # `activations.logit_lens_entropy()`; see that module for the full account.
     for l in range(L):
         # Hidden states for all tokens at this layer: (T, d_model)
         H = hidden_states[l + 1][0].float()  # (T, d_model)
+        already_normed = (l == L - 1)
 
         # Hidden state norms
         h_norm[:, l] = torch.norm(H, dim=-1).cpu().numpy()
@@ -195,8 +212,12 @@ def extract_batch(model, input_ids, jl_matrix, device):
 
         # ── Logit lens at this layer ──
         with torch.no_grad():
-            # Apply final layernorm + lm_head to this layer's hidden states
-            H_normed = final_norm(H.to(next(final_norm.parameters()).dtype))
+            # Apply final layernorm + lm_head to this layer's hidden states.
+            # The top layer arrives already normed (see the note above), so
+            # normalising it again would corrupt exactly the layer whose value
+            # is most quotable.
+            H_cast = H.to(next(final_norm.parameters()).dtype)
+            H_normed = H_cast if already_normed else final_norm(H_cast)
             ll_logits = lm_head(H_normed).float()  # (T, vocab_size) cast to f32
 
             # Entropy of logit lens predictions
@@ -209,7 +230,7 @@ def extract_batch(model, input_ids, jl_matrix, device):
                 ll_actual_logit = ll_logits[:-1].gather(1, next_token_ids.unsqueeze(1))  # (T-1, 1)
                 logit_lens_rank[:, l] = (ll_logits[:-1] > ll_actual_logit).sum(dim=-1).cpu().numpy()
 
-        del H_normed, ll_logits, ll_probs, ll_log_probs
+        del H_cast, H_normed, ll_logits, ll_probs, ll_log_probs
         torch.cuda.empty_cache()
 
         if (l + 1) % 8 == 0:
@@ -217,6 +238,20 @@ def extract_batch(model, input_ids, jl_matrix, device):
 
     dt_metrics = time.time() - t0_metrics
     print(f"    Metrics complete: {dt_metrics:.1f}s")
+
+    # ── Self-check: the lens at the top of the stack IS the output distribution ──
+    # If these disagree, the layer indexing or the norm placement is wrong, and
+    # every per-layer number in this file is suspect. Fail loudly at extraction
+    # time rather than shipping a plausible-looking array. (This is the check
+    # that would have caught the February 2026 double-normalisation on day one.)
+    top_gap = float(np.abs(logit_lens_entropy[:, L - 1] - token_entropy).max())
+    print(f"    Top-layer lens vs output entropy: max |diff| = {top_gap:.6f} nats")
+    if top_gap > 1e-3:
+        raise RuntimeError(
+            f"logit lens at layer {L-1} disagrees with the model's own output "
+            f"distribution by up to {top_gap:.4f} nats. The top hidden state is "
+            "already RMSNorm'd by HuggingFace; check `already_normed` above."
+        )
 
     return {
         # Per-layer metrics: (T, L) or (T, L, K)

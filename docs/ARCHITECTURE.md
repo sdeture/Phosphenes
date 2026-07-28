@@ -32,10 +32,16 @@ them** — see "Known divergence" below.
 
 One forward pass per conversation with hidden states captured at every layer.
 Per (token, layer): the 5,120-dimensional state is projected to 16 dimensions by a
-fixed Gaussian Johnson–Lindenstrauss matrix (seed 42, recorded in metadata), and a
+fixed Rademacher Johnson–Lindenstrauss matrix (seed 42, recorded in metadata), and a
 set of scalars is computed **on the full state, before projection** — `delta_l2`,
-`cos_prev`, `top1_frac`, `top25_frac`, `logit_lens_entropy` and others. Only the
-sketch is stored; the scalars are exact.
+`cos_prev`, `top1_frac`, `top25_frac`, `h_norm`, `logit_lens_entropy` and others.
+Only the sketch is stored; those scalars are exact.
+
+The exception is **`jl_energy`, which is measured on the sketch**, not the full
+state. It drives brightness, and it reads the depth-growth about 18% steeper than
+the exact `h_norm` does, because a single fixed random projection has a
+direction-dependent error that does not average away over tokens. Quote `h_norm`
+for claims about the model; see `docs/METRICS.md`.
 
 Output per session: `_activations.npz` (14 arrays), `_input_ids.npy`,
 `_metadata.json`, `_text.txt`.
@@ -179,7 +185,7 @@ colours are absolute. Aligning them is a known task, not a mystery.
 
 | Script | Purpose |
 |---|---|
-| `verify_tour_claims.py` | 108 assertions: the guided tour, the compute figures in THESIS.md, and a regression test on the argument's own wording. Non-zero exit on drift. |
+| `verify_tour_claims.py` | 172 assertions: the guided tour, the compute figures in THESIS.md, and a regression test on the argument's own wording. Non-zero exit on drift. |
 | `affect_float_recheck.py` | The quantiser correction, three ways. See `analysis/README.md`. |
 | `affect_layer_profile_recheck.py` | Layer profile, t-statistics, artefact decomposition. |
 | `make_figures.py` | The README figures, rendered from the same bundles the viewer reads. |

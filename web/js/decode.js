@@ -58,7 +58,7 @@ export function base64ToBytes(b64) {
  * Bounds are stored per (layer, dimension), flattened row-major as L*D. Using
  * one range per dimension pooled across layers — which an earlier version of
  * the encoder did — makes early-layer vectors unusable, because residual-stream
- * magnitude grows by roughly 78x from layer 0 to layer 60 and the pooled range
+ * magnitude grows by roughly 78x from layer 0 to layer 60 in sketch space and the pooled range
  * sets the step size from the deepest layers. See quantize_jl in
  * convert_for_web.py.
  *

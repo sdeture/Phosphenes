@@ -309,7 +309,7 @@ the range is softer than it looks.
 instruments, which are judged by whether they let you find things you would not
 otherwise find and then check them. So Phosphenes ships with the checks: the
 guided tour states a measurement for every pattern it points at;
-`analysis/verify_tour_claims.py` recomputes **108 assertions** from source —
+`analysis/verify_tour_claims.py` recomputes **172 assertions** from source —
 the tour's numbers, every compute figure in this document, and a regression test
 on the argument's own wording, added after a retracted claim survived in one
 surface and not the other. The divergence view runs a self-test on load and

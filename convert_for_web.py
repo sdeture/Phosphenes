@@ -10,6 +10,7 @@ Each session produces one JSON file containing base64-encoded binary arrays:
   - cos_instability  T*L    uint8  quantile-normalised (1 - cos_prev)
   - sparsity_norm    T*L    uint8  quantile-normalised update concentration
   - entropy_norm     T*L    uint8  logit-lens entropy on an ABSOLUTE scale
+                                   (top layer repaired — see activations.py)
   - seam_score       T      uint8  per-token discontinuity score
 
 Plus token_pieces, per-token roles, and turn boundaries as plain JSON.
@@ -41,6 +42,8 @@ from pathlib import Path
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
+
+import activations
 
 
 # --- Config ---
@@ -391,7 +394,9 @@ def convert_session(stem, data_dir, output_dir, pca_mean, pca_components, stats)
     cos_prev = act["cos_prev"].astype(np.float32)
     top1_frac = act["top1_frac"].astype(np.float32)
     top25_frac = act["top25_frac"].astype(np.float32)
-    logit_lens_entropy = act["logit_lens_entropy"].astype(np.float32)
+    # Repaired on read: the top layer as extracted is double-normalised and is
+    # replaced by the model's true output entropy. See activations.py.
+    logit_lens_entropy = activations.logit_lens_entropy(act)
     input_ids = np.load(str(ids_path)).astype(np.int64)
     meta = json.loads(meta_path.read_text())
     full_text = text_path.read_text(encoding="utf-8") if text_path.exists() else ""
@@ -424,6 +429,19 @@ def convert_session(stem, data_dir, output_dir, pca_mean, pca_components, stats)
 
     cos_instability = apply_bounds(1.0 - cos_prev, *stats["cos"])
     sparsity_norm = apply_bounds(top1_frac * 0.6 + top25_frac * 0.4, *stats["sparsity"])
+
+    # Token 0 is undefined for everything derived from a token-to-token
+    # difference: it has no predecessor, so delta_l2[0] and cos_prev[0] are both
+    # zero by construction. Zero cosine is *maximal* (1 - cos_prev), so the first
+    # column of every session rendered at full grain — a saturated artefact
+    # standing where a measurement should be. `seam_score` has always zeroed it;
+    # these three did not until 2026-07-28, while the docs claimed all derived
+    # quantities excluded it.
+    #
+    # Zero is the honest fill: it renders as "nothing here" rather than as an
+    # extreme reading. It is one column of ~3,000 and it is not a measurement.
+    for undefined_at_token_0 in (delta_norm, cos_instability, sparsity_norm):
+        undefined_at_token_0[0, :] = 0.0
 
     # --- Logit-lens entropy on an ABSOLUTE scale ---
     # Unlike every other array here, this is NOT quantile-normalised. Quantile

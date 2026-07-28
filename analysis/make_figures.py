@@ -16,7 +16,7 @@ Outputs to docs/img/:
 ── Encoding choices, and why ──────────────────────────────────────────────
 
 `overview.png` is a three-channel projection, NOT a colour scale. Hue is the
-cell's position in the top-3 principal subspace of the residual stream; it is an
+cell's position in the top-3 principal subspace of the 16-dim sketch; it is an
 embedding, and there is deliberately no colour bar because there is no ordered
 quantity to put on one. Similar colours mean nearby states. That is the whole
 claim. Stated explicitly because a multi-hued scientific image otherwise reads as
@@ -27,7 +27,7 @@ sequential ramp from the page background to amber, with zero at background. One
 hue, monotonically increasing lightness — never a rainbow.
 
 `layer_profiles.png` shows three measures whose ranges differ by three orders of
-magnitude (energy 18–1,382; update concentration 0.46–0.58; entropy 1.6–9.8).
+magnitude (energy 18–1,382; update concentration 0.46–0.58; entropy 1.0–9.8).
 Those cannot share an axis, and a second y-axis is never the answer — so they are
 three small multiples with a shared x axis, one series each, each titled. No
 legend: a single series is named by its own title.
@@ -35,6 +35,7 @@ legend: a single series is named by its own title.
 
 import base64
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -45,6 +46,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+import activations  # noqa: E402  (needs ROOT on the path first)
 WEB = ROOT / "web" / "data"
 DATA = ROOT / "data"
 OUT = ROOT / "docs" / "img"
@@ -189,7 +192,7 @@ def figure_layer_profiles():
     energy = act["jl_energy"].astype(np.float32).mean(axis=0)
     focus = (act["top1_frac"].astype(np.float32) * 0.6
              + act["top25_frac"].astype(np.float32) * 0.4).mean(axis=0)
-    entropy = act["logit_lens_entropy"].astype(np.float32).mean(axis=0)
+    entropy = activations.logit_lens_entropy(act).mean(axis=0)
 
     # Per-annotation pixel offsets, hand-placed. A single global offset put three
     # labels on top of the curve or the panel title; there are eight labels, so

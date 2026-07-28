@@ -38,12 +38,15 @@ export const MAIN_TOUR = [
         body: `You are looking at every layer of every token of a single conversation.
                Each <b>column is one token</b>; each <b>row is one transformer layer</b>,
                layer 0 at the bottom, layer 63 at the top. Colour is the cell's position
-               in the principal subspace of the residual stream. Brightness is its magnitude.
+               in the principal subspace of its 16-dimensional sketch. Brightness is its magnitude.
                Nothing here is decoration — every pixel is a measurement.`,
         look: `Brightness rises as you look upward. The residual stream grows as it goes deeper.`,
-        evidence: `Mean JL-space magnitude per layer, Well-Read-Library session: 17.8 at layer 0,
-                   1,381.7 at layer 60 — a 78x increase. This is the familiar growth of
-                   residual-stream norm with depth, here visible without plotting anything.`,
+        evidence: `The familiar growth of residual-stream norm with depth, here visible without
+                   plotting anything. Measured exactly on the full 5,120-dim state
+                   (h_norm), Well-Read-Library session: 19.9 at layer 0, 1,308.8 at layer 60
+                   — a 66x increase. Brightness itself is driven by the 16-dim sketch, which
+                   reads 17.8 to 1,381.7, or 78x: a single fixed random projection has a
+                   direction-dependent error that does not average away over tokens.`,
         state: { session: 'Dream_greedy_clean', token: 380, playing: false, overlay: null, refCell: null, textPanel: true, fork: false },
     },
     {
@@ -88,7 +91,7 @@ export const MAIN_TOUR = [
         look: `Uncertainty <i>rises</i> through the early layers before it falls. The model
                opens the question up before it closes it.`,
         evidence: `Layer-mean logit-lens entropy: 8.84 nats at layer 0, peaking at 9.84 nats at
-                   layer 9, then falling to 1.65 nats at the final layer. A uniform
+                   layer 9, then falling to 0.998 nats at the output. A uniform
                    distribution over the 151,936-token vocabulary would be 11.93 nats.
                    The rise is not monotonic noise — it is present in every session.`,
         state: { token: 620, playing: false, overlay: 'entropy', refCell: null, textPanel: false, fork: false },
@@ -145,8 +148,11 @@ export const MAIN_TOUR = [
                Notice the divergence is <i>small at the bottom and enormous at the top</i>.`,
         evidence: `JL vectors for tokens 0-72 are bit-identical between the two runs
                    (max absolute difference 0.0). At token 73 the mean layer distance jumps
-                   to 280.5 against a typical vector magnitude of 299.2, and stays there
-                   (264.4 averaged over tokens 1,000-2,900). At the fork token the distance
+                   to 280.5, against a magnitude of 353.0 for the state at that same token
+                   — a displacement 0.79x the size of the state itself — and stays there
+                   (264.4 averaged over tokens 1,000-2,900, corpus-wide typical magnitude
+                   299.2). The two runs are not orthogonal: mean cosine at the fork is
+                   0.610, where unrelated states would give 0. At the fork token the distance
                    is 36.5 at layer 0 and 1,286.6 at layer 62: a different word barely
                    changes the early representation and completely changes the prediction.`,
         state: { fork: true, token: 73, playing: false, overlay: null, refCell: null },

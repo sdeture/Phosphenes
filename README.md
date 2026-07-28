@@ -8,8 +8,8 @@ than a table of numbers can reach.**
 *One conversation, complete. Each column is a token, each row a transformer
 layer, layer 0 at the bottom. Vertical rules are turn boundaries — blue where the
 human begins, amber where the model does. Colour is the cell's position in the
-top-3 principal subspace of the residual stream: it is an **embedding, not a
-scale**, so similar colours mean nearby internal states and there is no colour
+top-3 principal subspace of its 16-dimensional sketch: it is an **embedding, not
+a scale**, so similar colours mean nearby internal states and there is no colour
 bar to give. Brightness is activation magnitude. The dashed white rule at token 73
 is explained further down.*
 
@@ -122,10 +122,17 @@ colour. The viewer measures this on load and reports the result in its own heade
 — if it ever failed, it would say so on screen rather than showing two pictures
 that merely look alike.
 
-**One token is enough for total separation, immediately.** Mean distance across
-layers at the fork is **280.5** against a typical cell magnitude of **299.2**.
-It does not decay: 264.4 averaged over tokens 1,000–2,900. The two continuations
-never re-converge — different stories, 2,990 and 3,379 tokens long.
+**One token is enough, immediately and permanently.** At the fork the two runs'
+states are **280.5** apart, against a magnitude of **353.0** for the state itself
+at that same token — a displacement 0.79× the size of the thing displaced, from
+one word. It does not decay: 264.4 averaged over tokens 1,000–2,900, against a
+corpus-wide typical magnitude of 299.2. The two continuations never re-converge
+— different stories, 2,990 and 3,379 tokens long.
+
+They are not *orthogonal*, and the earlier phrasing here ("total separation")
+overstated it: mean cosine between the two runs at the fork is **0.610**, where
+unrelated states would give 0 and identical ones 1. Still recognisably the same
+model doing the same kind of thing — in a completely different place.
 
 **The divergence has a shape, and the shape is mechanically sensible.** At the
 fork it is **36.5 at layer 0** and **1,286.6 at layer 62**. A different word
@@ -142,7 +149,7 @@ output. No token-level alignment is claimed, because none is possible.*
 ## What the instrument shows that is checkable
 
 Every number here is recomputed from source by
-[`analysis/verify_tour_claims.py`](analysis/verify_tour_claims.py) (108
+[`analysis/verify_tour_claims.py`](analysis/verify_tour_claims.py) (172
 assertions, non-zero exit on drift). Full definitions and caveats in
 [`docs/METRICS.md`](docs/METRICS.md).
 
@@ -161,11 +168,16 @@ was labelled.
 **9** and **44**, with a trough at **28**. Present in all eight sessions.
 
 **The model opens the question before it closes it.** Logit-lens entropy *rises*
-from 8.84 nats at layer 0 to a peak of **9.84 at layer 9**, then falls to **1.65**
-at the output. Present in all eight sessions.
+from 8.84 nats at layer 0 to a peak of **9.84 at layer 9**, then falls to **0.998**
+at the output — against 11.93 for a uniform guess over the vocabulary. Present in
+all eight sessions.
 
-**Activation magnitude grows ~78×** with depth, 17.8 → 1,381.7. Visible as
-brightness, with nothing plotted.
+**Activation magnitude grows ~66×** with depth, 19.9 → 1,308.8, measured on the
+full 5,120-dimensional state. Visible as brightness, with nothing plotted —
+though the brightness channel is driven by the 16-dimensional sketch, which reads
+the growth ~18% steeper (77.7×) because a single fixed random projection has a
+direction-dependent error that does not average away. `docs/METRICS.md` has the
+arithmetic.
 
 ---
 
@@ -190,7 +202,7 @@ web/                       The web viewer — static, no build step.
     js/app.js              State, chrome, input, tour driver.
   data/                    8 session bundles, ~6 MB each.
 
-data/                      Float32 source: 14 arrays per session, 9 stems (one is
+data/                      Extraction source: 14 arrays per session, 9 stems (one is
                            held out of both viewers). USE THIS for anything
                            quantitative, never web/data/.
 extraction/                The scripts that produced data/.
@@ -215,7 +227,7 @@ BASELINE_INVESTIGATION.md       The project falsifying its own headline result.
 ## Reproducing
 
 ```bash
-python analysis/verify_tour_claims.py      # 108 assertions: tour, compute, prose
+python analysis/verify_tour_claims.py      # 172 assertions: tour, compute, prose
 python analysis/affect_float_recheck.py    # the correction, three ways
 python analysis/make_figures.py            # the figures in this README
 python compute_shared_pca.py               # refit the shared PCA basis

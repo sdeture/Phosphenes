@@ -76,10 +76,12 @@ export const ENERGY_CEIL = 1.0;
  * Warm glow applied at tokens with high seam score, falling off vertically
  * from the middle layers.
  *
- * Empirically the seam score is 2.9x higher within +/-2 tokens of a
+ * Empirically the seam score is 2.85x higher within +/-2 tokens of a
  * conversational turn boundary than elsewhere (measured on the
- * Well-Read-Library session; see docs/METRICS.md). The glow is what makes
- * that difference preattentive — you see the boundary before you read it.
+ * Well-Read-Library session; asserted in analysis/verify_tour_claims.py).
+ * The ratio is sensitive to the window: 3.77x at +/-0, 2.31x at +/-3.
+ * The glow is what makes that difference preattentive — you see the
+ * boundary before you read it.
  */
 export const SEAM_GLOW_INTENSITY = 0.55;
 export const SEAM_GLOW_COLOR = [1.0, 0.88, 0.65];

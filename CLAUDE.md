@@ -14,9 +14,11 @@ data to anyone.
 ## Standing rules — these cost real money to learn
 
 1. **Never compute statistics from `web/data/*.json`.** They are a display format:
-   uint8-quantised, clipped, pooled-normalised. Use `data/*_activations.npz`
-   (float32). A published finding was half artefact because of this —
-   `analysis/README.md`.
+   uint8-quantised, clipped, pooled-normalised. Use `data/*_activations.npz`.
+   A published finding was half artefact because of this — `analysis/README.md`.
+   Note the npz is not uniformly float32: **`jl` is float16** (9 arrays f32,
+   4 int32). Adequate for everything published, but say "extraction source",
+   not "float32 source".
 2. **`convert_for_web.py` must reconvert ALL sessions, not a subset.**
    Normalisation bounds are pooled across sessions; a partial run produces bundles
    scaled differently from the ones on disk. `main()` refuses `--stems` without
@@ -28,9 +30,15 @@ data to anyone.
 4. **Layer 0 is at the BOTTOM.** Use `rowForLayer` / `layerForRow` in
    `web/js/render.js`. Getting this wrong is not cosmetic — it silently makes
    interactive tools sample mirror-image cells while drawing markers correctly.
-5. Serve `web/` over HTTP (`python3 -m http.server 8899 --directory web`).
+5. **`activations.py` owns the layer axis. Read it before indexing that axis,
+   and never read `logit_lens_entropy` out of the npz directly** — use
+   `activations.logit_lens_entropy()`, which repairs the double-normalised top
+   layer. Array layer 0 is the output of block 0 (the embedding is absent), and
+   layer 63 is the post-final-norm state, ~10× smaller than layer 62 and not on
+   the same scale as anything beneath it.
+6. Serve `web/` over HTTP (`python3 -m http.server 8899 --directory web`).
    `file://` cannot work — ES modules and `fetch`.
-6. **`web/about.html` is the SHORT version and should stay short** (~850 words).
+7. **`web/about.html` is the SHORT version and should stay short** (~850 words).
    It states the idea — a model's per-word computation is in nervous-system
    territory, so use more of the nervous system to read it — and points at
    `docs/THESIS.md` for the arithmetic. Do not migrate the argument back into it.
@@ -55,6 +63,66 @@ data to anyone.
     it more minimizing?"* Reading a smaller compute number as a *deficit* assumes
     compute = capability. If the model does the work with less, that is efficiency.
     State the number, name the convention, decline to score it.
+- **Final-layer entropy is 0.998 nats, not 1.65.** Retracted 2026-07-28: the
+  extraction applied the model's final RMSNorm to a state HuggingFace had
+  already normed, so layer 63 of `logit_lens_entropy` was the entropy of a
+  double-normed state. Proven bit-exactly on Qwen3-0.6B — `lm_head(hidden_states[L])`
+  reproduces the true logits to max |Δ| = 0.000000, and the second norm moves
+  entropy by up to 4.1 nats. The repair substitutes `token_entropy`, which was
+  in every npz all along and is exactly the right number. **The correction moves
+  the figure DOWN — the model commits harder than was claimed — and rise-then-fall
+  still holds 8/8.** Nothing else moved: seam is at layer 38, sparsity bands are
+  searched over 0–51, energy growth is quoted at layers 0 and 60, and the fork's
+  per-layer numbers at 0 and 62. Two verifier assertions now guard the repair in
+  both directions, so it cannot rot into a no-op.
+- **The 2026-07-28 definition audit found five more, all now fixed and asserted.**
+  Every one was a doc-vs-code mismatch that reading alone had missed for months;
+  each was caught by *testing the definition against the data*. In severity order:
+  (a) **`jl_energy` is measured on the 16-dim sketch and reads the depth-growth
+  78×, while the exact `h_norm` in the same file reads 65.6×** — the sketch/exact
+  ratio drifts 0.887→1.052 with depth (s.e.m. 0.003), because a *fixed* random
+  projection's error is a property of the direction, not the sample, so it never
+  averages out. Quote `h_norm` for the model, `jl_energy` for the display.
+  (b) **`top1_frac` is the top one PERCENT (52 of 5,120 dims), not the top one** —
+  documented as `max(s)/Σs`, which reads as a 52× stronger sparsity claim.
+  (c) **The PCA is fitted on the sketch, not the residual stream** — "top-3
+  principal subspace of the residual stream" appeared in five places including
+  the hero-image caption. METRICS had it right in one paragraph and wrong in
+  another.
+  (d) **The JL matrix is Rademacher, not Gaussian.**
+  (e) **Token 0 shipped as a saturated artefact** — `cos_instability[0]` = 255
+  (max grain) in every bundle, while METRICS claimed every derived quantity
+  excluded it. Only `seam_score` did. The *desktop* viewer didn't even do that.
+  Now zeroed in both viewers; the float source keeps the raw zeros on purpose.
+  Then two independent auditors found six more, all fixed and asserted:
+  (f) **`logit_lens_rank` carries the identical top-layer defect** (agrees with
+  truth on 53–60% of positions; mean rank 459 vs a true 12.5) with `actual_rank`
+  as its exact repair. Nothing displays it, which is *why* it mattered — METRICS
+  advertises it as the cheapest next overlay. `activations.logit_lens_rank()`.
+  (g) **The shared PCA was fitted on nine sessions including the held-out
+  `Dream_greedy_baseline`, while normalisation pooled eight.** Now honours
+  `SKIP_STEMS` and records its session list into the transform. Refit impact was
+  imperceptible (mean |ΔRGB| 0.70/255) but the pipeline disagreed with itself.
+  (h) **The fork's "total separation" overstated the geometry** — mean cosine
+  between the runs at the fork is 0.610, and the baseline quoted (299.2,
+  corpus-wide) was not the magnitude at the token being measured (353.0), so the
+  ratio was 0.94 rather than the like-for-like 0.79.
+  (i) Seam selectivity was stated backwards: the 60th-percentile floor pins
+  **60%** of tokens to zero, not 40%. (j) "The inspector reports pre-clip values"
+  is true of the desktop viewer only; the web bundles carry no pre-clip floats.
+  (k) `jl` is **float16**, so "float32 source" was wrong.
+  **Checked and CORRECT, don't re-audit:** vocab size 151,936 (confirmed against
+  `config.json`), `delta_l2`/`cos_prev`/`top*_frac` computed on the full state,
+  `np.rint` rounding, the `logits[:-1]` vs `input_ids[1:]` prediction offset,
+  1.96 GB at bfloat16, seam at layer 38 with token 0 excluded from its z-fit.
+  **Also real, not a bug:** token 0's ~50× norm is the attention-sink /
+  massive-activation effect.
+  **Method note, the transferable part:** every one of these was found by
+  *executing the definition against the data*, and none by reading. The two
+  cheapest instruments were (1) find two arrays that measure the same thing by
+  different routes and difference them (`jl_energy` vs `h_norm`, lens-top vs
+  `token_entropy`, lens-rank vs `actual_rank`), and (2) run the pipeline on a
+  small model that fits locally and check it against ground truth.
 - **The affect finding has TWO corrections, and they are different.** February's
   permutation test (p = 0.436) was the project's own work, documented unprompted in
   `BASELINE_INVESTIGATION.md` — do not describe that as a miss. The second is a
