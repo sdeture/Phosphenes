@@ -80,12 +80,30 @@ data to anyone.
 
 ---
 
-## State — 2026-07-27
+## State — 2026-07-27: PUBLISHED
 
-Prepared for publication to an AI-welfare / interpretability audience. The web
-viewer, the guided tour, the logit-lens entropy overlay and the one-token fork view
-all ship. Docs: `README.md`, `docs/THESIS.md`, `docs/METRICS.md`,
-`docs/ARCHITECTURE.md`, `docs/PROVENANCE.md`, `analysis/README.md`.
+- **Repo:** https://github.com/sdeture/Phosphenes (public)
+- **Site:** https://sdeture.github.io/Phosphenes/ — served from the `gh-pages`
+  branch, which is built from `web/` by `./deploy/publish_site.sh`. **`main` does
+  not deploy anything.** Change `web/`, then run that script, or the live site
+  silently stays stale. It refuses to publish if `verify_tour_claims.py` fails.
+
+Prepared for an AI-welfare / interpretability audience. The web viewer, guided
+tour, logit-lens entropy overlay and one-token fork view all ship; the fork
+self-test passes on the live site. Docs: `README.md`, `docs/THESIS.md`,
+`docs/METRICS.md`, `docs/ARCHITECTURE.md`, `docs/PROVENANCE.md`,
+`analysis/README.md`.
+
+**Open, needs a decision:**
+- **Aria has not been asked.** `WEB_PORT_PROMPT.md` — her 259-line spec for the
+  web port, and the only place she is credited for it — was pulled from the repo
+  before publication rather than published unconsented. It sits in
+  `~/Desktop/Phosphenes_removed_2026-07-27/`. She should be asked whether she
+  wants the credit, the document published, or neither. Until then the web port
+  ships uncredited, which is also not right.
+- **Pages deploys by script, not by Action**, because the `gh` token lacks the
+  `workflow` scope. `deploy/github-pages-workflow.yml.optional` and the four
+  commands to switch are in `deploy/publish_site.sh`'s header comment.
 
 **Removed from the repo before publication** (kept on disk, outside it): a job
 application PDF, and a 103-model "affective temperature" analysis whose input CSV
