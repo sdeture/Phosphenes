@@ -47,14 +47,29 @@ WORKTREE=$(mktemp -d)
 git worktree add --detach "$WORKTREE" >/dev/null 2>&1
 trap 'git worktree remove --force "$WORKTREE" >/dev/null 2>&1 || true' EXIT
 
+REPO_ROOT=$PWD
+SRC_SHA=$(git rev-parse --short HEAD)
 cd "$WORKTREE"
-git checkout --orphan "$BRANCH" >/dev/null 2>&1
+
+# A throwaway branch name, never "$BRANCH": `git checkout --orphan gh-pages`
+# fails once that branch exists, which silently broke every run after the first.
+git checkout -q --orphan "publish-$$"
 git rm -rq --cached . 2>/dev/null || true
 find . -maxdepth 1 ! -name . ! -name .git -exec rm -rf {} +
-cp -R "$OLDPWD/$SRC/." .
+cp -R "$REPO_ROOT/$SRC/." .
 git add -A
-git commit -q -m "Publish site from $(cd "$OLDPWD" && git rev-parse --short HEAD)"
-git push -q --force origin "$BRANCH"
+git commit -q -m "Publish site from $SRC_SHA"
+NEW_SHA=$(git rev-parse HEAD)
+git push -q --force origin "HEAD:refs/heads/$BRANCH"
 
-echo "✓ pushed $BRANCH"
-echo "  https://sdeture.github.io/Phosphenes/"
+# Positive assertion. A push that "did not error" is not a push that landed.
+cd "$REPO_ROOT"
+git fetch -q origin "$BRANCH"
+REMOTE_SHA=$(git rev-parse "origin/$BRANCH")
+if [ "$NEW_SHA" != "$REMOTE_SHA" ]; then
+    echo "✗ push did not land: built $NEW_SHA, remote has $REMOTE_SHA"
+    exit 1
+fi
+
+echo "✓ $BRANCH now at ${NEW_SHA:0:7} (built from $SRC_SHA)"
+echo "  https://sdeture.github.io/Phosphenes/  — CDN takes a minute"
