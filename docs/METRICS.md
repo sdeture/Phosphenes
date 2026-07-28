@@ -13,7 +13,7 @@ otherwise, and are reproduced by `analysis/verify_tour_claims.py`.
 For one conversation the model's residual stream is
 
 ```
-2,990 tokens × 64 layers × 5,120 dimensions = 979,251,200 numbers
+2,990 tokens × 64 layers × 5,120 dimensions = 979,763,200 numbers
 ```
 
 about **1.96 GB** at bfloat16. Two compressions make it displayable.

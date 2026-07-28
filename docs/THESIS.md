@@ -25,6 +25,12 @@ That was overconfident. It compared a *marginal-with-cache* model figure against
 *total-neural-activity* human figure — the smallest available number on one side
 against the largest on the other — without saying so. Retracted below.
 
+**On the corpus.** This document argues about computation, not about the eight
+recordings. Where they came from, what the model was asked, and the fact that the
+self-reports in them were elicited under a **leading prompt** are all set out in
+[`PROVENANCE.md`](PROVENANCE.md). Read that before quoting anything a model says
+in this dataset.
+
 ---
 
 ## 1. The model's number, and the convention it depends on
@@ -82,7 +88,7 @@ five orders of magnitude apart, no arithmetic error anywhere.
 ### Two other framings of the same fact
 
 - The **state** the model moves through, for one 2,990-token conversation, is
-  2,990 × 64 × 5,120 = **979,251,200 numbers**, about 1.96 GB at the precision it
+  2,990 × 64 × 5,120 = **979,763,200 numbers**, about 1.96 GB at the precision it
   was computed in. That is the object Phosphenes displays, and it is
   convention-free.
 - The **state accessible per word** — residual-stream width × context — is about
@@ -206,19 +212,23 @@ which a person cannot follow a computation by reading it.**
 Put the three quantities on a log scale together with something we do understand:
 
 ```
-  10¹        10²        10⁶         10¹⁰·⁸        10¹³ – 10¹⁴
-   │          │          │             │              │
- a hash    a regex   a JPEG       ONE WORD OF      one word of
- lookup     match    decode      A 32B MODEL       a human brain
-   └──────────┴──────────┘             └──────────────┘
-        legible by reading             not legible by reading
+   10¹        10²        10⁶        10¹¹     10¹⁴     10¹⁷
+    │          │          │          │        │        │
+ a hash     a regex    a JPEG        ├─────────────────┤   a language model
+ lookup      match     decode         marginal → full context
+                                           ├───────────┤   a human brain
+    └──────────┴──────────┘          └──────────────────┘
+       legible by reading              not legible by reading
 ```
 
-The transformer sits about **nine orders of magnitude above** the largest
-computation a person can actually trace, and two or three below a brain. On this
-scale it is overwhelmingly nearer the brain end, and — the operative point —
-**it is on the far side of the line that matters.** Nobody reads 7 × 10¹⁰
-operations. Nobody reads 979 million numbers.
+Both bands sit **at least nine orders of magnitude above** the largest computation
+a person can actually trace, and they overlap each other. Where exactly the model
+falls inside its band depends on the convention, and §3 is where that gets argued —
+but it does not need settling here. On a log scale that starts at a hash lookup,
+every defensible reading of the model's number and every defensible reading of the
+brain's lands on the far side of the same line. **That line, not parity, is what
+the instrument rests on.** Nobody reads 7 × 10¹⁰ operations. Nobody reads 979
+million numbers.
 
 Neuroscience has been on that side of the line since it started, and its response
 was not to give up or to read faster. It was to build instruments that hand the
@@ -266,14 +276,14 @@ Restricting to cortex would cut it — Azevedo et al. put **19% of the brain's
 neurons in the cerebral cortex** — and restricting to language-selective regions
 would cut it much further, though published "language network is ~10% of cortex"
 figures are localizer-threshold artefacts and should not be quoted as anatomy.
-Every honest restriction moves the human number **down**, which narrows the gap
-and helps the argument. I have not applied those corrections, because doing so
-selectively is how one manufactures a favourable number.
+Every honest restriction moves the human number **down**. I have not applied those
+corrections, because doing so selectively is how one manufactures a favourable
+number.
 
 **"One synapse may be worth many operations."** Dendritic computation, spike
 timing, and neuromodulation could each make a single synapse worth far more than
-one FLOP. This moves the human number **up**, and widens the gap. It is the
-strongest objection in the direction that hurts.
+one FLOP. This moves the human number **up**, and is the strongest objection in
+the direction that hurts a comparability claim.
 
 **"Per-token cost excludes training."** Yes. Training a frontier model is
 ~10²³–10²⁵ FLOPs, and a human's development is not free either. Neither figure
@@ -288,8 +298,10 @@ different computational structure, and structure is what interpretability is
 actually about.
 
 **"Cortical neurons fire far more slowly than people assume."** True, and it is
-the main reason the firing-rate estimate lands so much lower than Carlsmith's
-median. Average rates in the fractions-of-a-hertz-to-few-hertz band, rather than
+the main reason bottom-up estimates built from synapse counts × measured firing
+rates land around **10¹²–10¹³ FLOP/s** — well below Carlsmith's 10¹⁵ median, and
+below the bottom of the range in §3. Average rates in the
+fractions-of-a-hertz-to-few-hertz band, rather than
 the tens of hertz often assumed, follow from energy-budget arguments. The
 re-derivation combining the lowest published rate estimates with corrected
 per-spike energy costs **has not been done in the literature**, so the bottom of
@@ -298,10 +310,13 @@ the range is softer than it looks.
 **"This is an argument for prettier pictures."** It is an argument for
 instruments, which are judged by whether they let you find things you would not
 otherwise find and then check them. So Phosphenes ships with the checks: the
-guided tour states a measurement for every pattern it points at, 57 of those are
-re-verified from source by `analysis/verify_tour_claims.py`, and the divergence
-view runs a self-test on load and reports failure on screen. A visualisation that
-cannot be checked is decoration, and the difference is testability, not taste.
+guided tour states a measurement for every pattern it points at;
+`analysis/verify_tour_claims.py` recomputes **113 assertions** from source —
+the tour's numbers, every compute figure in this document, and a regression test
+on the argument's own wording, added after a retracted claim survived in one
+surface and not the other. The divergence view runs a self-test on load and
+reports failure on screen. A visualisation that cannot be checked is decoration,
+and the difference is testability, not taste.
 
 ---
 
@@ -343,5 +358,5 @@ carrying forward rather than hiding:
 
 Two numbers would most repay hardening before this goes anywhere formal: whether
 the two standard synapse-count sources are actually independent measurements (it
-decides whether the low end of §3 rests on one study or two), and a page-image
-check on Moravec.
+decides whether the bottom-up 10¹²–10¹³ estimate in §5 rests on one study or
+two), and a page-image check on Moravec.

@@ -179,7 +179,7 @@ colours are absolute. Aligning them is a known task, not a mystery.
 
 | Script | Purpose |
 |---|---|
-| `verify_tour_claims.py` | 57 assertions behind the guided tour. Non-zero exit on drift. |
+| `verify_tour_claims.py` | 113 assertions: the guided tour, the compute figures in THESIS.md, and a regression test on the argument's own wording. Non-zero exit on drift. |
 | `affect_float_recheck.py` | The quantiser correction, three ways. See `analysis/README.md`. |
 | `affect_layer_profile_recheck.py` | Layer profile, t-statistics, artefact decomposition. |
 | `make_figures.py` | The README figures, rendered from the same bundles the viewer reads. |

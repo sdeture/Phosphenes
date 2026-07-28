@@ -9,7 +9,7 @@
  *
  * The full object being visualised, for one conversation, is:
  *
- *     2,990 tokens x 64 layers x 5,120 dimensions = 979,251,200 numbers
+ *     2,990 tokens x 64 layers x 5,120 dimensions = 979,763,200 numbers
  *
  * At bfloat16 that is about 1.96 GB for a single conversation. That number is
  * the reason this tool exists in the form it does, and the reason there are so

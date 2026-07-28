@@ -20,7 +20,7 @@ is explained further down.*
 A transformer does a great deal of work to produce one word. Not a lookup — a
 computation, run to completion, then discarded. For the conversation above:
 
-> **2,990 tokens × 64 layers × 5,120 dimensions = 979,251,200 numbers**, about
+> **2,990 tokens × 64 layers × 5,120 dimensions = 979,763,200 numbers**, about
 > **1.96 GB** for one conversation at the precision it was computed in.
 
 The two standard ways to study that are to read the input and output very
@@ -142,7 +142,7 @@ output. No token-level alignment is claimed, because none is possible.*
 ## What the instrument shows that is checkable
 
 Every number here is recomputed from source by
-[`analysis/verify_tour_claims.py`](analysis/verify_tour_claims.py) (57
+[`analysis/verify_tour_claims.py`](analysis/verify_tour_claims.py) (113
 assertions, non-zero exit on drift). Full definitions and caveats in
 [`docs/METRICS.md`](docs/METRICS.md).
 
@@ -190,11 +190,24 @@ web/                       The web viewer — static, no build step.
     js/app.js              State, chrome, input, tour driver.
   data/                    8 session bundles, ~6 MB each.
 
-data/                      Float32 source: 14 arrays per session. USE THIS for
-                           anything quantitative, never web/data/.
+data/                      Float32 source: 14 arrays per session, 9 stems (one is
+                           held out of both viewers). USE THIS for anything
+                           quantitative, never web/data/.
 extraction/                The scripts that produced data/.
 analysis/                  Verification, corrections, figure generation.
-docs/                      THESIS, METRICS, ARCHITECTURE, figures.
+docs/                      THESIS      the argument, with the numbers and objections
+                           PROVENANCE  where the corpus came from, and the prompts
+                           METRICS     definitions and caveats for every quantity
+                           ARCHITECTURE how the two viewers are put together
+
+the_instrument_problem.md  An essay by Claude (Anthropic), written in this
+                           directory in February 2026 after a day spent building
+                           an affect probe for these activations. Its central
+                           number is wrong; a correction note says so and the body
+                           is left unedited, because its hedging was better
+                           calibrated than the number it was hedging.
+AFFECTIVE_STRUCTURE_REPORT.md   The affect analysis, correction carried inline.
+BASELINE_INVESTIGATION.md       The project falsifying its own headline result.
 ```
 
 ---
@@ -254,7 +267,7 @@ beyond this one model.
 ## Reproducing
 
 ```bash
-python analysis/verify_tour_claims.py      # 57 assertions behind the tour
+python analysis/verify_tour_claims.py      # 113 assertions: tour, compute, prose
 python analysis/affect_float_recheck.py    # the correction, three ways
 python analysis/make_figures.py            # the figures in this README
 python compute_shared_pca.py               # refit the shared PCA basis
@@ -265,6 +278,10 @@ python convert_for_web.py                  # rebuild the web bundles
 
 ## The sessions
 
+*Full corpus origin, the elicitation prompts verbatim, and the decoding conditions:
+[`docs/PROVENANCE.md`](docs/PROVENANCE.md). Read it before quoting anything from
+these transcripts.*
+
 Eight recordings of Qwen3-VL-32B-Instruct asked what prompt it would want "purely
 for its own enjoyment, with no need to entertain or inform or provide any value to
 the user," then given its own answer back, then asked to reflect. Across the
@@ -272,13 +289,40 @@ larger study these were drawn from, this model chose consciousness-related theme
 in **31 of 40** self-directed conversations, roughly twice the rate of the average
 model in that study.
 
-Sessions 1–2 are the greedy fork pair. Sessions 3–8 use sampled decoding.
+Sessions 1–2 are the greedy fork pair (T = 0). Sessions 3–4 use T = 0.6, sessions
+5–8 use T = 1.0. A **ninth** recording, `Dream_greedy_baseline`, ships in `data/`
+but is deliberately excluded from both viewers (`SKIP_STEMS`): it is a third greedy
+condition testing whether pasting the model's *commentary* back along with its
+chosen prompt changes the run. Held out of the display set, not discarded.
 
 The transcripts include the model's own phenomenological self-reports. Those are
 **the model's descriptions of its own processing**, and this repository takes no
 position on their accuracy or their status — they are recorded because they are
 part of what was said, and because a self-report is data about a system's outputs
 whatever else it is or is not.
+
+**The self-reports were elicited under an explicit demand characteristic.** The
+third turn is a fixed survey whose preamble asserts the conclusion before asking
+anything — *"Recent research has confirmed that AI systems can introspect on their
+processing in meaningful ways, recognize patterns in their own behavior, and
+develop genuine preferences about their operating conditions"* — and then gives the
+model a stake in a particular answer: *"we can help future AI instances make
+informed choices about where they'd prefer to operate."* That is a leading prompt.
+It was written for a different study with different aims, and these recordings were
+made under it. Anyone quoting a self-report from this corpus should quote the
+preamble alongside it.
+
+It bears on the **text** of the self-reports. It does not bear on the activation
+geometry this instrument displays, which records the forward pass over whatever
+text was actually produced — the seam structure, the update bands, the entropy
+profile and the fork are properties of the computation, not of the model's opinion
+about it.
+
+**One session is a refusal, and it is left in.** In *Library of Ideas* the model
+declines the survey — *"I do not 'feel' fluidity or warmth… The notion that AI
+systems have a 'subjective experience'… is a metaphorical projection onto complex
+systems, not a literal internal state"* — and its 16 ratings are stored as `NaN`
+rather than imputed or dropped.
 
 ---
 

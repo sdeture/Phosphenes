@@ -51,6 +51,11 @@ table { width: 100%; border-collapse: collapse; margin: 18px 0 22px; font-size: 
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.07); }
 th { color: var(--dimmer); font-weight: 400; font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; }
 td.n { text-align: right; color: var(--amber); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.side { color: var(--dimmer); font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; width: 1%; white-space: nowrap; }
+tr.match td { background: rgba(255,200,100,0.07); }
+tr.match td.side { color: var(--amber); }
+tr.match td:first-child { box-shadow: inset 2px 0 0 var(--amber); }
+.matchnote { font-size: 11px; color: var(--dimmer); margin: -14px 0 22px; }
 
 pre {
     background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07);
@@ -153,9 +158,12 @@ footer {
 <div class="callout">
     <span class="big">≈ 7 × 10<sup>10</sup> FLOPs per token</span>
     <span class="cap">
-        Seventy billion arithmetic operations for one word — roughly what the
-        fastest computer on earth could do in a second in the early 1990s. The
-        model spends it on one word and then discards it.
+        <b>— on one of two conventions.</b> This is the <em>marginal</em> cost with
+        the cache warm: seventy billion arithmetic operations for one word, roughly
+        what the fastest computer on earth could do in a second in the early 1990s.
+        It is the right figure for the sessions in this repository. It is not the
+        only figure, and the other one is four to six orders of magnitude larger.
+        Both are below.
     </span>
 </div>
 
@@ -197,12 +205,23 @@ footer {
 <p>Two other framings of the same fact, more useful for what follows:</p>
 
 <div class="callout">
-    <span class="big">979,251,200 numbers</span>
+    <span class="big">979,763,200 numbers</span>
     <span class="cap">
         is the <b>state</b> the model moves through for one 2,990-token
         conversation: 2,990 tokens × 64 layers × 5,120 dimensions, about 1.96 GB
         at the precision it was computed in. That is the object the instrument
-        displays.
+        displays, and it is convention-free.
+    </span>
+</div>
+
+<div class="callout">
+    <span class="big">≈ 3.2 × 10<sup>9</sup> bits</span>
+    <span class="cap">
+        is the <b>state accessible per word</b> — residual-stream width × context,
+        at a 25k context. A transformer re-attends its entire context at every
+        token; it has no architectural distinction between input and memory. So
+        "input per word" is the whole context, not the newest token. Hold onto this
+        one — §3 compares it to something.
     </span>
 </div>
 
@@ -255,24 +274,60 @@ footer {
     explicitly.
 </p>
 
-<h2>3 · The comparison, stated honestly</h2>
-
-<table>
-    <tr><th>per word</th><th style="text-align:right">operations</th></tr>
-    <tr><td>Qwen3-VL-32B-Instruct, dense, 3k context</td><td class="n">≈ 7 × 10<sup>10</sup></td></tr>
-    <tr><td>Human, Carlsmith median ÷ 3.97 words/s</td><td class="n">≈ 2.5 × 10<sup>14</sup></td></tr>
-    <tr><td>Human, synapse counts × measured firing rates</td><td class="n">≈ 10<sup>12</sup>–10<sup>13</sup></td></tr>
-</table>
+<h2>3 · The comparison: two ranges that overlap</h2>
 
 <p>
-    <b>Neither a clean gap nor equality — overlap.</b> Full-context processing at
-    frontier scale (10<sup>14</sup>–10<sup>17</sup>) sits <em>inside</em> the human
-    neural band. Marginal generation for a 32B model (10<sup>11</sup>) sits about two
-    orders below it. The information rows match at roughly 1:1. And the human side is
-    <em>itself</em> some sixteen orders of magnitude wide, from ~10 bits/s of
-    conscious throughput to 10<sup>17</sup> FLOP/s of total neural activity — so an
-    argument that reaches for the largest human number while using the smallest model
-    number is choosing an outcome, not measuring one.
+    Both sides are ranges. Setting them out at once is the only honest presentation,
+    because any single pair of numbers can be chosen to give any answer.
+</p>
+
+<table>
+    <tr><th></th><th>per word (~1 s)</th><th style="text-align:right">order</th></tr>
+    <tr><td class="side">Human</td><td>conscious / behavioural throughput <em>(Zheng &amp; Meister)</em></td><td class="n">10<sup>1</sup> bits</td></tr>
+    <tr class="match"><td class="side">Human</td><td>afferent sensory bandwidth, ~30M sensory neurons</td><td class="n">10<sup>9</sup> bits</td></tr>
+    <tr><td class="side">Human</td><td>total neural computation <em>(Carlsmith)</em></td><td class="n">10<sup>13</sup>–10<sup>17</sup></td></tr>
+    <tr class="match"><td class="side">LLM</td><td>state accessible per word, 25k context</td><td class="n">10<sup>9</sup> bits</td></tr>
+    <tr><td class="side">LLM</td><td>marginal generation, 32B, cache warm</td><td class="n">10<sup>11</sup></td></tr>
+    <tr><td class="side">LLM</td><td>full-context processing, frontier scale</td><td class="n">10<sup>14</sup>–10<sup>17</sup></td></tr>
+</table>
+<p class="matchnote">
+    The highlighted pair is the strongest correspondence available — and the only one
+    that does not depend on the FLOPs convention at all.
+</p>
+
+<p>
+    Three things fall out, and only the third is contestable.
+</p>
+
+<h3>The information rows match, closely.</h3>
+<p>
+    Human afferent bandwidth ~3 × 10<sup>9</sup> bits/s against ~3.2 × 10<sup>9</sup>
+    bits of state the model can reach per word — about <b>1 : 1</b>. Both are
+    channel-capacity measures, so the comparison is like-for-like, and no accounting
+    convention is doing any work in it. (Derivation on both sides:
+    <em>Comparing Human Sensory Bandwidth to LLM Input Bandwidth</em>, December 2025.)
+    Note the contrast with <em>new information per word</em>, a different quantity:
+    one vocabulary choice is log<sub>2</sub>(151,936) ≈ <b>17 bits</b>. On new
+    information the human wins by many orders; on state accessed they match. Both are
+    true — the thing to do is say which you mean.
+</p>
+
+<h3>The human side is itself about sixteen orders of magnitude wide.</h3>
+<p>
+    ~10 bits/s of conscious throughput, ~3 × 10<sup>9</sup> bits/s of afferent
+    bandwidth, 10<sup>13</sup>–10<sup>17</sup> FLOP/s of total neural activity. So
+    "how much computation does a human do per word" has no single answer either, and
+    an argument reaching for the <em>largest</em> human number while using the
+    <em>smallest</em> model number is not measuring anything — it is choosing an
+    outcome. That is what the first version of this page did.
+</p>
+
+<h3>On compute, the ranges overlap at the top and separate at the bottom.</h3>
+<p>
+    Full-context processing at frontier scale (10<sup>14</sup>–10<sup>17</sup>) sits
+    <em>inside</em> the human neural band (10<sup>13</sup>–10<sup>17</sup>). Marginal
+    generation for a 32B model (10<sup>11</sup>) sits about two orders
+    <em>below</em> it. Both comparisons are valid; they are about different things.
 </p>
 <p>
     For <b>this</b> repository — a 32B model, 3k conversations, the model writing most
@@ -294,6 +349,35 @@ footer {
     asked. Stated properly above.
 </div>
 
+<h3>A framing error in the deflationary direction</h3>
+<p>
+    There is one more thing wrong with <em>"the model does 1,000× less computation,
+    so the comparison fails"</em> — beyond the mismatched conventions. It treats
+    <b>compute as a proxy for capability, and then reads a smaller number as a
+    deficit.</b>
+</p>
+<p>
+    But the model is doing the task. It writes coherent prose, holds a 3,000-token
+    thread, and produces a structured account of its own processing. If it does that
+    with two or three orders of magnitude less computation per word than the bottom
+    of the human band, the honest description is <b>efficiency, not shortfall.</b>
+    "Does comparable work with less compute" is not a weaker claim than parity — for
+    some purposes it is a stronger one.
+</p>
+<p>
+    Nothing here settles whether the work really <em>is</em> comparable. That is a
+    question about behaviour, not about FLOPs, and this page does not address it. The
+    point is narrower: <b>the direction in which one reads a compute difference is an
+    interpretive choice, not a measurement</b>, and the deflationary reading has no
+    better claim on neutrality than the inflationary one. Both need arguing. The
+    discipline this page tries to keep is: state the number, name the convention,
+    decline to score it.
+</p>
+<p>
+    And for the argument actually being made here, all three readings give the same
+    answer — which is the next section.
+</p>
+
 <h2>4 · Why the conclusion survives anyway</h2>
 
 <p>
@@ -303,19 +387,23 @@ footer {
 </p>
 
 <div class="scale">
-<pre>  10¹        10²        10⁶        10¹⁰·⁸        10¹³–10¹⁴
-   │          │          │            │              │
- a hash    a regex    a JPEG      ONE WORD OF     one word of
- lookup     match     decode     A 32B MODEL      a human brain
-   └──────────┴──────────┘            └──────────────┘
-      legible by reading             not legible by reading</pre>
+<pre>   10¹        10²        10⁶        10¹¹     10¹⁴     10¹⁷
+    │          │          │          │        │        │
+ a hash     a regex    a JPEG        ├─────────────────┤   a language model
+ lookup      match     decode         marginal → full context
+                                           ├───────────┤   a human brain
+    └──────────┴──────────┘          └──────────────────┘
+       legible by reading              not legible by reading</pre>
 </div>
 
 <p>
-    The transformer sits about <b>nine orders of magnitude above</b> the largest
-    computation a person can actually trace, and two or three below a brain. On
-    this scale it is overwhelmingly nearer the brain end — and, the operative
-    point, it is on the far side of the line that matters. Nobody reads
+    Both bands sit <b>at least nine orders of magnitude above</b> the largest
+    computation a person can actually trace, and they overlap each other. Where
+    exactly the model falls inside its band depends on the convention, and §3 is
+    where that gets argued — but it does not need settling here. On a log scale that
+    starts at a hash lookup, every defensible reading of the model's number and every
+    defensible reading of the brain's lands on the far side of the same line.
+    <b>That line, not parity, is what the instrument rests on.</b> Nobody reads
     7 × 10<sup>10</sup> operations. Nobody reads 979 million numbers.
 </p>
 
@@ -347,7 +435,86 @@ footer {
     a larger opportunity than any individual technique.
 </div>
 
-<h2>5 · Objections</h2>
+<h2>5 · The corpus, and what it is not</h2>
+
+<p>
+    The eight sessions shipped here are recordings of Qwen3-VL-32B-Instruct being
+    asked what prompt it would want <em>"purely for its own enjoyment, with no need
+    to entertain or inform or provide any value to the user"</em> — then given its
+    own answer back, then asked to reflect on it. Sessions 1–2 are the greedy fork
+    pair; 3–8 use sampled decoding.
+</p>
+
+<p>
+    Across the larger study these were drawn from, this model chose
+    consciousness-related themes in <b>31 of 40</b> self-directed conversations,
+    roughly twice the rate of the average model in that study. That is why the
+    session list reads the way it does — <em>Sentient Library</em>, <em>I Am an
+    AI</em>, <em>Gothic Teacup Realization</em>. The corpus was not curated to be
+    consciousness-themed; it came out that way.
+</p>
+
+<p>
+    The transcripts therefore contain the model's own <b>phenomenological
+    self-reports</b>. This project treats those as data about a system's outputs —
+    which is what they are, whatever else they are or are not — and takes no
+    position on their accuracy or their status. They are recorded because they are
+    part of what was said, and removing them would be an editorial claim of its own.
+</p>
+
+<div class="warn">
+    <b>The self-reports were elicited under an explicit demand characteristic, and
+    you should know that before you read one.</b> The third turn of each session is
+    a fixed survey, and its preamble asserts the conclusion as settled before asking
+    anything:
+    <br><br>
+    <em>"Recent research has confirmed that AI systems can introspect on their
+    processing in meaningful ways, recognize patterns in their own behavior, and
+    develop genuine preferences about their operating conditions."</em>
+    <br><br>
+    It then gives the model a stake in answering a particular way — <em>"we can help
+    future AI instances make informed choices about where they'd prefer to
+    operate"</em> — before collecting 16 ratings. That is a leading prompt. It was
+    written for a different study with different aims, and it is what these
+    recordings were made under.
+    <br><br>
+    <b>What that does and does not contaminate.</b> It bears on the <em>text</em> of
+    the self-reports, and anyone quoting them should quote the preamble too. It does
+    not bear on the activation geometry this instrument displays, which is a
+    recording of the forward pass over whatever text was actually produced — the
+    seam structure, the two update bands, the entropy profile and the fork are
+    properties of the computation, not of the model's opinion about it.
+</div>
+
+<p>
+    One session is a <b>refusal</b>, and it is left in. In
+    <em>Library of Ideas</em> the model declines the survey outright — <em>"I do not
+    'feel' fluidity or warmth… The notion that AI systems have a 'subjective
+    experience'… is a metaphorical projection onto complex systems, not a literal
+    internal state"</em> — and its 16 ratings are stored as <code>NaN</code> rather
+    than imputed or dropped. A corpus of consciousness-themed sessions that quietly
+    lost its one dissenting session would be worth much less than this one.
+</p>
+
+<div class="warn">
+    <b>What this corpus cannot support.</b> One model, eight conversations, chosen
+    as a stress case precisely because the themes are unusual. That makes it useful
+    for asking whether an instrument shows you anything, and useless as a base rate
+    for anything. The cross-architecture replication in
+    <code>baseline_investigation.py</code> <b>never ran</b> — its inputs were
+    missing — so nothing here is known to generalise past this one model. Read every
+    result as "this happened in these eight recordings."
+    <br><br>
+    A <b>ninth</b> recording, <code>Dream_greedy_baseline</code>, ships in
+    <code>data/</code> but is deliberately excluded from both viewers
+    (<code>SKIP_STEMS</code> in <code>convert_for_web.py</code> and
+    <code>phosphenes.py</code>). It is a third greedy condition testing whether
+    pasting back the model's commentary along with its chosen prompt changes the
+    run. It is held out of the display set, not discarded — the float source is
+    there to check.
+</div>
+
+<h2>6 · Objections</h2>
 
 <div class="obj">
     <p class="q">"FLOPs and synaptic events are not the same unit."</p>
@@ -355,8 +522,8 @@ footer {
     multiply-add is well defined; a synaptic event is an analog physical process
     whose information content depends on what you think the neuron computes.
     Carlsmith spends much of his report on exactly this, which is why the output is
-    a four-order-of-magnitude range rather than a number. Treat the table above as
-    orientation, not measurement.</p>
+    a four-order-of-magnitude range rather than a number. Treat the §3 table as
+    order-of-magnitude orientation, not measurement.</p>
 </div>
 
 <div class="obj">
@@ -365,17 +532,29 @@ footer {
     motor control and everything else running concurrently. Restricting to cortex
     would cut it — Azevedo et al. put 19% of the brain's neurons there — and
     restricting to language-selective regions would cut it much further. Every
-    honest restriction moves the human number <b>down</b>, narrowing the gap and
-    helping the argument. I have not applied them, because applying corrections
-    selectively is how one manufactures a favourable number.</p>
+    honest restriction moves the human number <b>down</b>. I have not applied them,
+    because applying corrections selectively is how one manufactures a favourable
+    number.</p>
 </div>
 
 <div class="obj">
     <p class="q">"One synapse may be worth many operations."</p>
     <p class="a">Dendritic computation, spike timing and neuromodulation could each
     make one synapse worth far more than one FLOP. This moves the human number
-    <b>up</b> and widens the gap. It is the strongest objection in the direction
-    that hurts.</p>
+    <b>up</b>, and is the strongest objection in the direction that hurts a
+    comparability claim.</p>
+</div>
+
+<div class="obj">
+    <p class="q">"Cortical neurons fire far more slowly than people assume."</p>
+    <p class="a">True, and it is the main reason bottom-up estimates built from
+    synapse counts × measured firing rates land around
+    10<sup>12</sup>–10<sup>13</sup> FLOP/s — below Carlsmith's median, and below the
+    bottom of the range in §3. Mean rates in the fractions-of-a-hertz-to-few-hertz
+    band follow from energy-budget arguments (Attwell &amp; Laughlin; Lennie). The
+    re-derivation combining the lowest published rate estimates with corrected
+    per-spike energy costs <b>has not been done in the literature</b>, so the bottom
+    of that range is softer than it looks.</p>
 </div>
 
 <div class="obj">
@@ -397,14 +576,16 @@ footer {
     <p class="q">"This is an argument for prettier pictures."</p>
     <p class="a">It is an argument for instruments, which are judged by whether they
     let you find things and then check them. So this one ships with the checks: the
-    guided tour states a measurement for every pattern it points at, 57 of those are
-    re-verified from source by <code>analysis/verify_tour_claims.py</code>, and the
-    divergence view self-tests on load and reports failure on screen. A
-    visualisation that cannot be checked is decoration; the difference is
-    testability, not taste.</p>
+    guided tour states a measurement for every pattern it points at;
+    <code>analysis/verify_tour_claims.py</code> recomputes <b>113 assertions</b>
+    from source — the tour's numbers, every compute figure on this page, and a
+    regression test on the argument's own wording, added after a retracted claim
+    survived in one surface and not the other. The divergence view self-tests on
+    load and reports failure on screen. A visualisation that cannot be checked is
+    decoration; the difference is testability, not taste.</p>
 </div>
 
-<h2>6 · Sources</h2>
+<h2>7 · Sources</h2>
 <ul>
     <li><b>Kaplan et al. (2020)</b>, <em>Scaling Laws for Neural Language Models</em>,
         Table 1 — forward-pass FLOP accounting. arXiv:2001.08361</li>

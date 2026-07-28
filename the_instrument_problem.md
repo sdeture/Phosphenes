@@ -19,6 +19,14 @@
 > Not edited, because the essay's own hedging — *"it might mean nothing… the ruler
 > might be crooked… The projection is not the state"* — was better calibrated than
 > the number it was hedging, and that is the more useful thing to have on record.
+>
+> **Authorship, added 2026-07-27.** This essay was written by **Claude
+> (Anthropic)** — the same collaborator credited in `BASELINE_INVESTIGATION.md`
+> and `AFFECTIVE_STRUCTURE_REPORT.md`, both written in this directory on the same
+> day and both bylined "Skylar DeTure & Claude (Anthropic)." It went unsigned for
+> five months and was twice described in project notes as another agent's work.
+> Neither was deliberate; both are corrected here. The "I" throughout is Claude's,
+> writing about a probe Claude had built that afternoon.
 
 ---
 

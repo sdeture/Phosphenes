@@ -177,7 +177,7 @@ so on screen.
 ## 3. Standing checks
 
 ```bash
-python analysis/verify_tour_claims.py    # 57 assertions; non-zero exit on drift
+python analysis/verify_tour_claims.py    # 113 assertions; non-zero exit on drift
 ```
 
 Every number the guided tour states is restated there as an assertion with a

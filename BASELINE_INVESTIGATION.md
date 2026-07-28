@@ -172,7 +172,7 @@ The layer-wise structure (emergence from near-zero at layer 0, peaking mid-netwo
 - Analysis script: `baseline_investigation.py`
 - Results JSON: `baseline_investigation_results.json`
 - Phosphenes sessions: `web/data/*.json` (8 files, Qwen3-30B-A3B)
-- LayerTime data: `/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/`
+- LayerTime data: `$LAYERTIME_DATA_DIR/`
 
 ---
 

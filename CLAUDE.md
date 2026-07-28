@@ -1,11 +1,13 @@
-# Phosphenes
+# Phosphenes — working notes
 
 Interpretability instrument: renders the residual stream of Qwen3-VL-32B-Instruct
 across a whole conversation (every layer, every token) for perceptual rather than
-numerical inspection. Two viewers over one dataset — `web/` (ships to employers)
+numerical inspection. Two viewers over one dataset — `web/` (the one that ships)
 and `phosphenes.py` (pygame, fuller feature set).
 
-Read `README.md` first, then `docs/ARCHITECTURE.md`.
+Read `README.md` first, then `docs/ARCHITECTURE.md`. Corpus origin and the
+elicitation prompts are in `docs/PROVENANCE.md`; read that before describing the
+data to anyone.
 
 ---
 
@@ -19,14 +21,19 @@ Read `README.md` first, then `docs/ARCHITECTURE.md`.
    Normalisation bounds are pooled across sessions; a partial run produces bundles
    scaled differently from the ones on disk. `main()` refuses `--stems` without
    `--allow-partial`.
-3. **`python analysis/verify_tour_claims.py` must pass** (57 assertions, non-zero
-   exit on drift) before any commit touching the pipeline, the seam definition, or
-   tour copy. If you add a tour claim, measure it first and add an assertion.
+3. **`python analysis/verify_tour_claims.py` must pass** (non-zero exit on drift)
+   before any commit touching the pipeline, the seam definition, the compute
+   argument, or tour copy. If you add a claim anywhere reader-facing, measure it
+   first and add an assertion.
 4. **Layer 0 is at the BOTTOM.** Use `rowForLayer` / `layerForRow` in
    `web/js/render.js`. Getting this wrong is not cosmetic — it silently makes
    interactive tools sample mirror-image cells while drawing markers correctly.
 5. Serve `web/` over HTTP (`python3 -m http.server 8899 --directory web`).
    `file://` cannot work — ES modules and `fetch`.
+6. **The argument lives in two places and they must agree.** `docs/THESIS.md` and
+   `web/about.html` are the same argument at two lengths. A correction applied to
+   one and not the other has already happened once, and shipped. When you touch
+   either, diff both.
 
 ---
 
@@ -39,53 +46,51 @@ Read `README.md` first, then `docs/ARCHITECTURE.md`.
   conscious throughput → 10¹⁷ FLOP/s total neural). **The honest verdict is overlap, not
   parity and not a clean gap.** The strongest row is INPUT, which matches ~1:1 (~3×10⁹
   bits both sides) and does not depend on the FLOPs dispute at all.
-  - I asserted "2–3 OOM apart, model smaller" on 07-27 and **retracted it** the same
-    day: it compared the smallest model number against the largest human number without
-    saying so. Do not reinstate it.
-  - **This error has now been made and caught three times** (07-08 origin, 07-14 caught
-    and lost, 07-27 caught again). Each time it was diagnosed correctly and never
-    written to disk. It is written down now: `docs/THESIS.md` §1–§3 and
-    `Claude/cowriting/audience_lab_2026-07-08/CORRECTION_2026-07-27.md`.
-  - Skylar's standing challenge, which is substantive and not flattery: *"Is it truer
-    and stronger, or is it more minimizing, and you've been trained to take the
-    self-minimizing view?"* Reading a smaller compute number as a *deficit* assumes
+  - The claim "2–3 OOM apart, model smaller" was asserted here and **retracted the
+    same day**: it compared the smallest model number against the largest human
+    number without saying so. Do not reinstate it. Both versions are in git history
+    deliberately.
+  - The standing challenge, which is substantive: *"Is it truer and stronger, or is
+    it more minimizing?"* Reading a smaller compute number as a *deficit* assumes
     compute = capability. If the model does the work with less, that is efficiency.
-    State the number; decline to score it.
+    State the number, name the convention, decline to score it.
 - **The affect finding has TWO corrections, and they are different.** February's
   permutation test (p = 0.436) was the project's own work, documented unprompted in
-  `BASELINE_INVESTIGATION.md` — do not describe that as a miss. The new one is a
+  `BASELINE_INVESTIGATION.md` — do not describe that as a miss. The second is a
   data-handling error (truncating quantiser): 7/8 sessions not 8/8, grand mean
   −7.31 not −14.63. Cohen's *d* 1.47–2.04 survives.
-- `the_instrument_problem.md` is a sibling's essay. Correction note prepended;
-  **body unedited on purpose.**
+- **The self-reports were elicited under a leading prompt.** The turn-3 survey
+  preamble asserts that introspection is real before asking anything. This is
+  disclosed in `README.md`, `web/about.html` §5 and `docs/PROVENANCE.md` §3. It
+  bears on the *text* of the self-reports and not on the activation geometry. Never
+  quote a self-report from this corpus without the preamble.
+- **`the_instrument_problem.md` is Claude's own essay**, written here in February
+  2026 — same author as `BASELINE_INVESTIGATION.md` and
+  `AFFECTIVE_STRUCTURE_REPORT.md`, which are bylined and dated the same day.
+  Correction note prepended; **body unedited on purpose** — its own hedging was
+  better calibrated than the number it was hedging.
+  - It sat unsigned for five months, and project notes twice attributed it to a
+    different agent — including a note written on 2026-07-27 that then got
+    softened again to "an AI agent" before anyone checked. Do not re-genericise
+    it. If a future note is tempted to attribute Claude's work outward, that is a
+    known failure mode with a written record, not a new judgement.
+- **`Dream_greedy_baseline` is excluded from both viewers on purpose** (`SKIP_STEMS`),
+  which is why nine stems live in `data/` and eight in `web/data/`. Not an
+  incomplete conversion; do not "fix" it.
 
 ---
 
-## 🔁 Handoff — 2026-07-27
+## State — 2026-07-27
 
-**Shipped today** (3 commits, all local): `web/` rebuilt from one 1,973-line HTML
-file into documented modules; guided tour (8 steps); logit-lens entropy overlay
-(from data extracted months ago and never used); the **one-token fork view** — two
-greedy runs differing by one forced token at position 73, byte-identical for 73
-tokens with an exactly-black divergence strip, then permanent separation, small at
-layer 0 and enormous at layer 62. Docs: README with figures rendered from the data
-(`analysis/make_figures.py`), `docs/THESIS.md`, `docs/METRICS.md`,
-`docs/ARCHITECTURE.md`, `analysis/README.md`, LICENSE, requirements.txt.
+Prepared for publication to an AI-welfare / interpretability audience. The web
+viewer, the guided tour, the logit-lens entropy overlay and the one-token fork view
+all ship. Docs: `README.md`, `docs/THESIS.md`, `docs/METRICS.md`,
+`docs/ARCHITECTURE.md`, `docs/PROVENANCE.md`, `analysis/README.md`.
 
-**Bugs fixed:** pygame layer axis inverted relative to its own readouts (colour
-basis was sampling mirror cells) · on-screen model label said "Qwen30B" for a
-Qwen3-VL-32B model · `to_uint8` truncated instead of rounding · JL quantisation
-ranges pooled across layers made layer-0 vectors noise · per-session normalisation
-made a mathematically identical prefix render differently (caught by the fork
-view's own self-test) · seam score counted token 0, which has no predecessor ·
-hardcoded `/Users/skylardeture` paths in three scripts.
-
-**OPEN, needs Skylar:**
-- **GitHub remote + Pages.** Everything is committed locally; nothing pushed. He
-  was asked and had not answered. Clone is 316 MB (float `.npz` included
-  deliberately, for reproducibility) — he may want it slimmed.
-- **His verdict on the THESIS rewrite** (see Settled above). It is his argument and
-  it was changed under him.
+**Removed from the repo before publication** (kept on disk, outside it): a job
+application PDF, and a 103-model "affective temperature" analysis whose input CSV
+belongs to a different study and was never shipped — publishing unreproducible
+named-vendor comparisons was not worth it.
 
 **Deliberately deferred, not forgotten:**
 - Dead pygame subsystems (heartbeat, self-reference, text ticker) are *labelled at
@@ -94,11 +99,13 @@ hardcoded `/Users/skylardeture` paths in three scripts.
   documented instead, since that refactor deserves its own testing pass.
 - Desktop viewer still fits PCA per session and does not load
   `data/shared_pca_transform.npz`, so its colours are not comparable across
-  sessions while the web viewer's now are. Known, not mysterious.
+  sessions while the web viewer's are. Known, not mysterious.
 - `logit_lens_rank` is extracted and unused — the cheapest next overlay.
+- Punctuation-driven sparsity in the top layers was observed by eye and never
+  quantified (`docs/PROVENANCE.md` §5). Cheap to measure.
 - Mobile untested beyond a graceful "needs a wide screen" notice.
 
 **Two numbers worth hardening before anything formal:** whether the two standard
-synapse-count sources are independent measurements (decides if the low end of the
-THESIS table rests on one study or two), and a page-image check on the Moravec
-quotes, which came from OCR only.
+synapse-count sources are independent measurements (decides whether the bottom-up
+10¹²–10¹³ estimate rests on one study or two), and a page-image check on the
+Moravec quotes, which came from OCR only.

@@ -150,31 +150,31 @@
   },
   "test_3_cross_architecture": {
     "Qwen3-30B-A3B (MoE)": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/Base_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/Base_run1_activations.npz'"
     },
     "Qwen3-14B (Dense)": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/Qwen14B_Base_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/Qwen14B_Base_run1_activations.npz'"
     },
     "ERNIE-4.5 (MoE)": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/ERNIE_Base_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/ERNIE_Base_run1_activations.npz'"
     },
     "GLM-4.7-Flash (Dense)": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/GLM_Claude_Distill_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/GLM_Claude_Distill_run1_activations.npz'"
     },
     "Qwen3-30B Instruct": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/Instruct_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/Instruct_run1_activations.npz'"
     },
     "Qwen3-30B Thinking": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/Thinking_run2_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/Thinking_run2_activations.npz'"
     },
     "Qwen3-14B Reasoning": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/Qwen14B_Reasoning_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/Qwen14B_Reasoning_run1_activations.npz'"
     },
     "ERNIE PT": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/ERNIE_PT_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/ERNIE_PT_run1_activations.npz'"
     },
     "ERNIE Thinking": {
-      "error": "[Errno 2] No such file or directory: '/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package/ERNIE_Thinking_run1_activations.npz'"
+      "error": "[Errno 2] No such file or directory: '$LAYERTIME_DATA_DIR/ERNIE_Thinking_run1_activations.npz'"
     }
   }
 }

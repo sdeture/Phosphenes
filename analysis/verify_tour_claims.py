@@ -226,6 +226,142 @@ for tok, expect in [(9, 0.99), (193, 0.972), (239, 0.0), (445, 1.00),
     check(f"bookmark: seam at token {tok}", float(seam_flag[tok]), expect, 0.08)
 
 # ══════════════════════════════════════════════════════════════════════
+# THE COMPUTE ARGUMENT — every figure quoted in docs/THESIS.md §1-§3 and
+# web/about.html §1-§3, recomputed from the recorded architecture.
+#
+# These exist because the argument was once shipped with a retracted claim in
+# it, and none of the assertions above could have caught that: they all check
+# the instrument, and the error was in the prose.
+# ══════════════════════════════════════════════════════════════════════
+
+meta = json.loads((DATA / f"{FLAGSHIP}_metadata.json").read_text())
+d_model, n_layer, n_ctx = meta["d_model"], meta["num_layers"], meta["num_tokens"]
+N_PARAMS = 32e9  # from the model id; not derivable from activations
+
+check_bool("compute: model id is a 32B Qwen3-VL", "Qwen3-VL-32B" in meta["model_id"])
+check("compute: d_model", d_model, 5120, 0)
+check("compute: n_layer", n_layer, 64, 0)
+check("compute: n_ctx (flagship)", n_ctx, 2990, 0)
+
+# The convention-free framing: the state the model moves through.
+state_numbers = n_ctx * n_layer * d_model
+check("compute: state numbers = n_ctx x n_layer x d_model",
+      state_numbers, 979_763_200, 0)
+check("compute: state size at 2 bytes/value", state_numbers * 2 / 1e9, 1.96, 0.01, " GB")
+
+# Convention (a): marginal decode, cache warm. Kaplan et al. (2020) Table 1.
+attn_term = 2 * n_layer * n_ctx * d_model
+marginal = 2 * N_PARAMS + attn_term
+check("compute: marginal FLOPs/token (2N + attn)", marginal, 6.6e10, 0.1e10)
+check("compute: attention share of marginal cost",
+      100 * attn_term / marginal, 3.0, 0.5, "%")
+
+# Convention (b): full context, n_ctx x 2N. The four table rows in §1.
+for params, ctx, expected in [(25e9, 10_000, 5.0e14), (70e9, 32_000, 4.5e15),
+                              (350e9, 70_000, 4.9e16), (400e9, 200_000, 1.6e17)]:
+    got = ctx * 2 * params
+    check(f"compute: full-context {params/1e9:.0f}B at {ctx//1000}k",
+          got, expected, 0.05 * expected)
+
+# The gap between the two conventions IS the context length. That is why the
+# docs say "four to six orders of magnitude": the gap is log10(n_ctx), and
+# real contexts run 10k-1M. Assert the identity, then the claimed band.
+for ctx in (10_000, 200_000, 1_000_000):
+    gap = np.log10((ctx * 2 * N_PARAMS) / marginal)
+    check(f"compute: convention gap at {ctx//1000}k == log10(n_ctx)",
+          float(gap), float(np.log10(ctx)), 0.05, " OOM")
+gap_10k = float(np.log10((10_000 * 2 * N_PARAMS) / marginal))
+gap_200k = float(np.log10((200_000 * 2 * N_PARAMS) / marginal))
+check_bool("compute: '4 to 6 OOM' holds across 10k-200k contexts",
+           4.0 <= round(gap_10k, 1) and gap_200k <= 6.0)
+
+# "reads 200k, answers in 10 words" -> ~1.3e15 per output word, this model.
+check("compute: 200k read / 10-word answer, per output word",
+      (200_000 * 2 * N_PARAMS) / 10, 1.3e15, 0.1e15)
+
+# §3's information rows — the 1:1 correspondence, which is the strongest claim.
+check("compute: LLM state accessible/word, generic 8k width at 25k ctx",
+      25_000 * 8_000 * 16, 3.2e9, 0.1e9, " bits")
+check("compute: LLM state accessible/word, THIS model at 25k ctx",
+      25_000 * d_model * 16, 2.0e9, 0.1e9, " bits")
+check("compute: new information per token, log2(vocab)",
+      float(np.log2(151_936)), 17.2, 0.1, " bits")
+
+# ══════════════════════════════════════════════════════════════════════
+# PROSE CONSISTENCY — docs/THESIS.md and web/about.html are the same
+# argument at two lengths. A correction applied to one and not the other
+# has already happened once and shipped; this is the regression test.
+# ══════════════════════════════════════════════════════════════════════
+
+import re
+
+SURFACES = {
+    "docs/THESIS.md": (ROOT / "docs" / "THESIS.md").read_text(),
+    "web/about.html": (ROOT / "web" / "about.html").read_text(),
+    "README.md": (ROOT / "README.md").read_text(),
+}
+
+# Retracted claims. If any of these reappears as an assertion, the argument
+# has regressed to the version that was withdrawn on 2026-07-27.
+RETRACTED = [
+    (r"two or three below a brain", "retracted: '2-3 OOM below a brain'"),
+    (r"narrow(?:s|ing) the gap", "retracted: gap-direction presupposition"),
+    (r"widen(?:s|ing) the gap", "retracted: gap-direction presupposition"),
+    (r"10¹³\s*[–-]\s*10¹⁴", "retracted: stale 10^13-10^14 human band"),
+    (r"does not survive the numbers", "retracted: 'the claim fails' framing"),
+    (r"Carlsmith median ÷", "retracted: single-figure human comparison"),
+]
+for pattern, why in RETRACTED:
+    for name, text in SURFACES.items():
+        check_bool(f"prose: {name} free of {why}",
+                   re.search(pattern, text, re.I) is None)
+
+# Statements that must be present, because removing one silently restores a
+# one-sided reading of the comparison.
+REQUIRED = [
+    ("docs/THESIS.md", r"overlap", "the overlap verdict"),
+    ("docs/THESIS.md", r"marginal", "the marginal convention, named"),
+    ("docs/THESIS.md", r"full[- ]context", "the full-context convention, named"),
+    ("docs/THESIS.md", r"efficiency, not shortfall", "the deflationary-framing caveat"),
+    ("web/about.html", r"overlap", "the overlap verdict"),
+    ("web/about.html", r"marginal", "the marginal convention, named"),
+    ("web/about.html", r"full[- ]context", "the full-context convention, named"),
+    ("web/about.html", r"efficiency, not shortfall", "the deflationary-framing caveat"),
+    # The corpus was elicited under a leading prompt. Disclosed, or it is not honest.
+    ("web/about.html", r"Recent research has confirmed", "the demand-characteristic disclosure"),
+    ("README.md", r"Recent research has confirmed", "the demand-characteristic disclosure"),
+    ("README.md", r"refusal", "the refusal session, acknowledged"),
+]
+for name, pattern, why in REQUIRED:
+    check_bool(f"prose: {name} still states {why}",
+               re.search(pattern, SURFACES[name], re.I) is not None)
+
+# Section numbers must be consecutive from 1. Inserting a section and forgetting
+# to renumber the rest shipped two sections called "6" on 2026-07-27.
+html_secs = [int(m) for m in re.findall(r"<h2>(\d+)\s*·", SURFACES["web/about.html"])]
+md_secs = [int(m) for m in re.findall(r"^##\s+(\d+)\.", SURFACES["docs/THESIS.md"], re.M)]
+check_bool("prose: web/about.html section numbers are 1..N consecutive",
+           html_secs == list(range(1, len(html_secs) + 1)))
+check_bool("prose: docs/THESIS.md section numbers are 1..N consecutive",
+           md_secs == list(range(1, len(md_secs) + 1)))
+
+# Every §N cross-reference must point at a section that exists.
+for name, secs in [("web/about.html", html_secs), ("docs/THESIS.md", md_secs)]:
+    refs = {int(m) for m in re.findall(r"§(\d+)", SURFACES[name])}
+    check_bool(f"prose: {name} §-references all resolve",
+               refs.issubset(set(secs)))
+
+# The assertion count is quoted in four places. Quoting a number that has
+# drifted is exactly the failure this script exists to prevent, so it checks
+# its own. This must be the LAST check added: it counts itself.
+STATED_IN = ["README.md", "docs/THESIS.md", "web/about.html"]
+total_with_this = len(results) + len(STATED_IN)  # this loop adds one per surface
+for name in STATED_IN:
+    nums = {int(n) for n in re.findall(r"(\d+)\s*(?:\n\s*)?assertions", SURFACES[name])}
+    check_bool(f"prose: {name} quotes the real assertion count ({total_with_this})",
+               nums == {total_with_this})
+
+# ══════════════════════════════════════════════════════════════════════
 # REPORT
 # ══════════════════════════════════════════════════════════════════════
 
