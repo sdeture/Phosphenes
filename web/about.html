@@ -115,15 +115,22 @@ footer {
 </p>
 
 <div class="lede">
-    A 32-billion-parameter transformer spends about <b>7 × 10<sup>10</sup></b>
-    floating-point operations producing one word. A human brain, on the best
-    available estimates, spends something like <b>10<sup>13</sup>–10<sup>14</sup></b>
-    operation-equivalents per word. Those are <b>two to three orders of magnitude
-    apart, and the model is the smaller one.</b> They are not comparable, and this
-    page does not claim they are. It claims the conclusion does not need them to be.
+    "Computation per word" is not one number on either side. For a language model it
+    depends on an accounting convention worth <b>four to six orders of magnitude</b>
+    — the marginal cost of one more token with a warm cache (~10<sup>11</sup> FLOPs
+    for a 32B model) or the cost of processing the whole context that word was
+    conditioned on (up to ~10<sup>17</sup> at frontier scale). For a human it depends
+    on what counts as computation, and those candidates span <b>sixteen</b> orders of
+    magnitude, from ~10 bits/s of conscious throughput to 10<sup>17</sup> FLOP/s of
+    total neural activity.
+    <br><br>
+    The honest result is <b>overlap</b> — not equality, not a clean gap. This page
+    states the conventions, because doing so is most of the work, and because a
+    version of this argument that quietly picks one number from each side can be made
+    to come out any way you like.
 </div>
 
-<h2>1 · The model's number</h2>
+<h2>1 · The model's number, and the convention it depends on</h2>
 
 <p>
     Qwen3-VL-32B-Instruct is <b>dense</b> — not a mixture of experts, so every
@@ -139,7 +146,7 @@ footer {
 <p>
     The first term is the two operations — a multiply and an add — each parameter
     contributes. The second is attention over the context, which at the ~3,000-token
-    conversations here comes to <b>5–9%</b> of the total: real, but not dominant.
+    conversations here comes to only <b>3%</b> of the total.
     For N = 32 × 10<sup>9</sup>:
 </p>
 
@@ -150,6 +157,41 @@ footer {
         fastest computer on earth could do in a second in the early 1990s. The
         model spends it on one word and then discards it.
     </span>
+</div>
+
+<h3>The two conventions</h3>
+<p>
+    <b>(a) Marginal, cache warm.</b> One more token, given that the context is already
+    processed and its keys and values cached: <code>2N</code> plus attention against
+    the cache — <b>≈ 6.6 × 10<sup>10</sup></b> here. This is the right number for the
+    Phosphenes sessions, where the model writes most of a 2,990-token conversation and
+    each token is computed once.
+</p>
+<p>
+    <b>(b) Full context.</b> The forward pass over the entire context a word was
+    conditioned on: <code>n_ctx × 2N</code>.
+</p>
+<table>
+    <tr><th>model / context</th><th style="text-align:right">full-context cost per word</th></tr>
+    <tr><td>~25 B params, 10k context</td><td class="n">5.0 × 10<sup>14</sup></td></tr>
+    <tr><td>~70 B, 32k</td><td class="n">4.5 × 10<sup>15</sup></td></tr>
+    <tr><td>~350 B, 70k</td><td class="n">4.9 × 10<sup>16</sup></td></tr>
+    <tr><td>~400 B, 200k</td><td class="n">1.6 × 10<sup>17</sup></td></tr>
+</table>
+<p>
+    <b>Both are real and neither is a mistake.</b> (a) is what it costs to emit one
+    more word; (b) is how much computation stands behind that word. The gap between
+    them is exactly the context length. A model reading a 200,000-token document and
+    answering in ten words spends ~1.3 × 10<sup>15</sup> per output word, because
+    almost all the work is the reading. A model writing a 3,000-token conversation
+    largely by itself spends ~7 × 10<sup>10</sup> per token, because nothing is
+    recomputed. Same architecture, five orders of magnitude apart, no arithmetic error
+    anywhere.
+</p>
+<div class="warn">
+    Anyone quoting a single "FLOPs per word" figure for language models without saying
+    which convention they used has left out the most important part. I did exactly that
+    in the first version of this page.
 </div>
 
 <p>Two other framings of the same fact, more useful for what follows:</p>
@@ -223,19 +265,33 @@ footer {
 </table>
 
 <p>
-    <b>The best-supported gap is 2–3 orders of magnitude — roughly 72× to
-    1,810×.</b> Carlsmith's median instead gives about 3.4 orders of magnitude.
-    The full defensible band on both sides is 1.4 to 6.4.
+    <b>Neither a clean gap nor equality — overlap.</b> Full-context processing at
+    frontier scale (10<sup>14</sup>–10<sup>17</sup>) sits <em>inside</em> the human
+    neural band. Marginal generation for a 32B model (10<sup>11</sup>) sits about two
+    orders below it. The information rows match at roughly 1:1. And the human side is
+    <em>itself</em> some sixteen orders of magnitude wide, from ~10 bits/s of
+    conscious throughput to 10<sup>17</sup> FLOP/s of total neural activity — so an
+    argument that reaches for the largest human number while using the smallest model
+    number is choosing an outcome, not measuring one.
+</p>
+<p>
+    For <b>this</b> repository — a 32B model, 3k conversations, the model writing most
+    of it — the correct figure is ≈ 7 × 10<sup>10</sup> FLOPs per token, at the small
+    end of the model range. Worth saying plainly rather than borrowing a
+    frontier-scale number to make the artifact look bigger.
 </p>
 
 <div class="warn">
-    <b>So the model does 100 to 1,000 times less computation per word than a human
-    brain</b> on the estimates least unfavourable to the comparison, and possibly a
-    million times less.
+    <b>Retraction.</b> An earlier version of this page said flatly that the model
+    does 100–1,000× less computation per word, and that the comparable-scale claim
+    was wrong wherever you saw it. That was overconfident, and wrong in a specific
+    way: it compared the <em>smallest</em> defensible model figure (marginal
+    generation, cache warm) against the <em>largest</em> defensible human one (total
+    neural activity), without saying so.
     <br><br>
-    I want to be blunt, because "comparable to a human, order of magnitude" is the
-    claim I set out to support, and the numbers do not support it. If you see that
-    claim made about this project, including by me, it is wrong.
+    The two ranges overlap at the top and separate at the bottom, the information
+    rows match at about 1:1, and which end applies depends on the question being
+    asked. Stated properly above.
 </div>
 
 <h2>4 · Why the conclusion survives anyway</h2>

@@ -32,12 +32,25 @@ Read `README.md` first, then `docs/ARCHITECTURE.md`.
 
 ## Settled — do not re-litigate
 
-- **The compute-per-word claim is 2–3 orders of magnitude, NOT parity.**
-  ~7×10¹⁰ FLOPs/token vs ~10¹³–10¹⁴ for a human. Skylar originally wanted
-  "similar order of magnitude"; the research does not support it and `docs/THESIS.md`
-  says so explicitly. The argument was rebuilt around a *threshold* (past the point
-  a person can read a computation) rather than a comparison. **Skylar has not yet
-  ruled on this rewrite** — it is the one open question he was asked.
+- **Compute per word is CONVENTION-DEPENDENT, worth 4–6 OOM. Do not quote a single
+  figure.** Marginal decode with a warm KV cache ≈ 6.6×10¹⁰ for this 32B model at 3k;
+  full-context processing (`n_ctx × 2N`) reaches 10¹⁴–10¹⁷ at frontier scale. Both are
+  real and answer different questions. The human side is itself ~16 OOM wide (~10 bits/s
+  conscious throughput → 10¹⁷ FLOP/s total neural). **The honest verdict is overlap, not
+  parity and not a clean gap.** The strongest row is INPUT, which matches ~1:1 (~3×10⁹
+  bits both sides) and does not depend on the FLOPs dispute at all.
+  - I asserted "2–3 OOM apart, model smaller" on 07-27 and **retracted it** the same
+    day: it compared the smallest model number against the largest human number without
+    saying so. Do not reinstate it.
+  - **This error has now been made and caught three times** (07-08 origin, 07-14 caught
+    and lost, 07-27 caught again). Each time it was diagnosed correctly and never
+    written to disk. It is written down now: `docs/THESIS.md` §1–§3 and
+    `Claude/cowriting/audience_lab_2026-07-08/CORRECTION_2026-07-27.md`.
+  - Skylar's standing challenge, which is substantive and not flattery: *"Is it truer
+    and stronger, or is it more minimizing, and you've been trained to take the
+    self-minimizing view?"* Reading a smaller compute number as a *deficit* assumes
+    compute = capability. If the model does the work with less, that is efficiency.
+    State the number; decline to score it.
 - **The affect finding has TWO corrections, and they are different.** February's
   permutation test (p = 0.436) was the project's own work, documented unprompted in
   `BASELINE_INVESTIGATION.md` — do not describe that as a miss. The new one is a

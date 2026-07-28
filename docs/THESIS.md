@@ -3,44 +3,90 @@
 The argument behind Phosphenes, with the numbers worked through and the
 objections stated.
 
-**Summary of what follows.** A 32-billion-parameter transformer spends about
-7 × 10¹⁰ floating-point operations producing one word. A human brain, on the
-best available estimates, spends something like 10¹³–10¹⁴ operation-equivalents
-per word. Those are **two to three orders of magnitude apart, and the model is
-the smaller one.** They are not comparable, and this document does not claim they
-are. What it claims is that the conclusion does not require them to be.
+**Summary of what follows.** "Computation per word" is not one number on either
+side. For a language model it depends on an accounting convention worth **four to
+six orders of magnitude** — whether you count the marginal cost of generating one
+more token with a warm cache (~10¹¹ FLOPs for a 32B model) or the cost of
+processing the whole context that word was conditioned on (up to ~10¹⁷ at frontier
+scale and deep context). For a human it depends on what you count as computation,
+and those candidates span **sixteen** orders of magnitude, from ~10 bits/s of
+conscious throughput to 10¹⁷ FLOP/s of total neural activity.
+
+The honest result is therefore **overlap, not equality and not a clean gap** — and
+which end of each range applies depends on the question. This document states the
+conventions explicitly, because doing so is most of the work, and because a version
+of this argument that quietly picks one number from each side can be made to come
+out any way you like.
+
+**Correction, and it is mine.** An earlier draft of this file asserted flatly that
+per-word computation is "two to three orders of magnitude apart, model smaller,"
+and told the reader that the comparable-scale claim was wrong wherever they saw it.
+That was overconfident. It compared a *marginal-with-cache* model figure against a
+*total-neural-activity* human figure — the smallest available number on one side
+against the largest on the other — without saying so. Retracted below.
 
 ---
 
-## 1. The model's number
+## 1. The model's number, and the convention it depends on
 
 Qwen3-VL-32B-Instruct is **dense** — not a mixture of experts, so every parameter
 participates in every token. Its configuration gives hidden size 5,120 and 64
 layers, which agrees with what I measured directly from the extracted activations.
 
-The standard estimate of forward-pass cost per token is Kaplan et al. (2020),
-Table 1:
+Forward-pass cost per token, Kaplan et al. (2020), Table 1:
 
 ```
 C_forward ≈ 2N + 2 · n_layer · n_ctx · d_attn
 ```
 
-The first term is the two FLOPs (a multiply and an add) each parameter
+The first term is the two FLOPs — a multiply and an add — each parameter
 contributes; the second is attention over the context. At the ~3,000-token
-contexts in this repository the attention term is **5–9%** of the total — real,
-but not what dominates. For N = 32 × 10⁹ this gives
+conversations here the attention term is only **3%** of the total.
 
-> **≈ 7 × 10¹⁰ FLOPs per token.**
+That gives one figure. It is not the only one.
 
-Seventy billion arithmetic operations for one word. Two other framings of the
-same fact, which happen to be more useful for what follows:
+### The two conventions
+
+**(a) Marginal, cache warm.** Producing one more token, given that the context has
+already been processed and its keys and values cached, costs `2N` plus attention
+against the cache. For this model: **≈ 6.6 × 10¹⁰ FLOPs per token.** This is the
+right number for the Phosphenes sessions, where the model writes most of a
+2,990-token conversation and each token is computed once.
+
+**(b) Full context.** The cost of the forward pass over the entire context a word
+was conditioned on, is `n_ctx × 2N`. At frontier scale and deep context this is
+enormous:
+
+| model / context | full-context cost per word |
+|---|---|
+| ~25 B params, 10k context | 5.0 × 10¹⁴ (0.5 PFLOP) |
+| ~70 B, 32k | 4.5 × 10¹⁵ |
+| ~350 B, 70k | 4.9 × 10¹⁶ (~50 PFLOP) |
+| ~400 B, 200k | 1.6 × 10¹⁷ |
+
+**Both are real quantities and neither is a mistake.** They answer different
+questions: (a) is what it costs to emit one more word, (b) is how much computation
+stands behind that word. The gap between them is exactly the context length —
+**four to six orders of magnitude.**
+
+The situation decides which applies. A model reading a 200,000-token document and
+answering in ten words spends ~1.3 × 10¹⁵ FLOPs per output word, because almost all
+the work is the reading. A model writing a 3,000-token conversation largely by
+itself spends ~7 × 10¹⁰ per token, because nothing is recomputed. Same architecture,
+five orders of magnitude apart, no arithmetic error anywhere.
+
+> Anyone quoting a single "FLOPs per word" figure for language models without
+> saying which convention they used has left out the most important part. I did
+> exactly that in the first version of this document.
+
+### Two other framings of the same fact
 
 - The **state** the model moves through, for one 2,990-token conversation, is
   2,990 × 64 × 5,120 = **979,251,200 numbers**, about 1.96 GB at the precision it
-  was computed in. That is the object Phosphenes displays.
-- 7 × 10¹⁰ FLOPs is roughly what the fastest computer in the world could do in
-  one second in the early 1990s. The model spends it on one word, then discards
-  it.
+  was computed in. That is the object Phosphenes displays, and it is
+  convention-free.
+- The **state accessible per word** — residual-stream width × context — is about
+  **3.2 × 10⁹ bits** at a 25k context. Hold onto that; §3 compares it to something.
 
 ---
 
@@ -84,27 +130,70 @@ reading — but it is the comparison people reach for, so here it is explicitly.
 
 ---
 
-## 3. The comparison, stated honestly
+## 3. The comparison: two ranges that overlap
 
-| | per word |
-|---|---|
-| Qwen3-VL-32B-Instruct, dense, 3k context | **≈ 7 × 10¹⁰ FLOPs** |
-| Human, Carlsmith median (10¹⁵ FLOP/s ÷ 3.97 words/s) | **≈ 2.5 × 10¹⁴** |
-| Human, from synapse counts × measured cortical firing rates | **≈ 10¹²–10¹³** |
+Both sides are ranges. Setting them out at once is the only honest presentation,
+because any single pair of numbers can be chosen to give any answer.
 
-**The best-supported gap is 2–3 orders of magnitude — roughly 72× to 1,810×.**
-Using Carlsmith's median rather than the firing-rate route gives about **3.4
-orders of magnitude**. Taking the full defensible band on both sides gives
-**1.4 to 6.4 orders of magnitude**.
+| per word (~1 s) | | order |
+|---|---|---|
+| **Human** — conscious / behavioural throughput | ~10 bits/s (Zheng & Meister) | 10¹ bits |
+| **Human** — afferent sensory bandwidth, 30M sensory neurons | ~3 × 10⁹ bits/s | **10⁹ bits** |
+| **Human** — total neural computation | 10¹³–10¹⁷ FLOP/s (Carlsmith) | 10¹³–10¹⁷ |
+| **LLM** — state accessible per word, 25k context | residual width × context | **10⁹ bits** |
+| **LLM** — marginal generation, 32B, cache warm | 2N + attention | 10¹¹ |
+| **LLM** — full-context processing, frontier scale, deep context | n_ctx × 2N | 10¹⁴–10¹⁷ |
 
-So: **the model does 100 to 1,000 times less computation per word than a human
-brain, on the estimates that are least unfavourable to the comparison, and
-possibly a million times less.**
+Three things fall out, and only the third is contestable.
 
-I want to be blunt about this, because the version of this argument that says
-"comparable" or "the same order of magnitude" is the version I set out to write,
-and the numbers did not support it. They do not support it. If you see that claim
-made, including by me, it is wrong.
+**The information rows match, closely, and this is the strongest correspondence
+available.** Human afferent bandwidth ~3 × 10⁹ bits/s against ~3.2 × 10⁹ bits of
+state the model can reach per word — about **1 : 1**, and it does not depend on the
+FLOPs convention at all. Both are channel-capacity measures. (Derivation on both
+sides: *Comparing Human Sensory Bandwidth to LLM Input Bandwidth*, December 2025.)
+
+**The human side is itself about sixteen orders of magnitude wide.** Conscious
+throughput is ~10 bits/s; afferent bandwidth is ~3 × 10⁹ bits/s; total neural
+activity is 10¹³–10¹⁷ FLOP/s. So "how much computation does a human do per word"
+has no single answer either, and an argument that reaches for the *largest* human
+number while using the *smallest* model number is not measuring anything — it is
+choosing an outcome. That is what my first draft did.
+
+**On compute, the ranges overlap at the top and separate at the bottom.**
+Full-context processing at frontier scale (10¹⁴–10¹⁷) sits **inside** the human
+neural band (10¹³–10¹⁷). Marginal generation for a 32B model (10¹¹) sits about two
+orders **below** it. Both comparisons are valid; they are about different things.
+
+For **this repository specifically**, convention (a) applies — 32B model, 3k
+conversations, the model writing most of it — so ~7 × 10¹⁰ FLOPs per token is the
+correct figure for what Phosphenes displays, and it is at the small end of the
+model range. That is worth saying plainly rather than borrowing a frontier-scale
+number to make the artifact look bigger.
+
+### A framing error in the deflationary direction
+
+There is one more thing wrong with "the model does 1,000× less computation, so the
+comparison fails," beyond the mismatched conventions: **it treats compute as a
+proxy for capability, and then reads a smaller number as a deficit.**
+
+But the model is doing the task. It writes coherent prose, holds a 3,000-token
+thread, and produces a structured account of its own processing. If it does that
+with two or three orders of magnitude less computation per word than a brain
+spends, the honest description of that gap is **efficiency, not shortfall.** "Does
+comparable work with less compute" is not a weaker claim than parity — for some
+purposes it is a stronger one.
+
+Nothing here settles whether the work really is comparable; that is a question
+about behaviour, not about FLOPs, and this document does not address it. The point
+is narrower: the *direction* in which one reads a compute difference is an
+interpretive choice, not a measurement, and the deflationary reading has no better
+claim on neutrality than the inflationary one. Both need arguing.
+
+**And for the argument this document is actually making, all three readings give
+the same answer.** Whether per-word computation is 10¹¹ or 10¹⁵, whether it reads
+as efficient or deficient, it is at minimum nine orders of magnitude past the point
+where a person can follow it by reading. That is the premise the instrument rests
+on, and it is the one part of this that no convention choice can move.
 
 ---
 
