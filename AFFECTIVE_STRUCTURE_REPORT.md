@@ -1,3 +1,30 @@
+> **Second correction, 2026-07-27 — a data-handling error, distinct from the
+> February permutation correction below.**
+>
+> The tonic-baseline numbers in this report were computed from `web/data/*.json`,
+> the uint8-quantised **display** bundles, not from the float source in `data/`.
+> That quantiser truncated toward zero instead of rounding, biasing every value
+> down by ~0.5 LSB. A difference of means cancels such a bias — so the affect
+> *direction*, and every Cohen's *d* in Table 2, are unaffected. A mean projection
+> does not cancel it, and the tonic baseline is a mean projection.
+>
+> Recomputed on float32: the baseline is negative in **7 of 8** sessions, not 8,
+> and the grand mean is **−7.31**, not −14.63. Exactly 50% of the reported
+> magnitude was the encoder. `Dream_conv_00191_run1` flips to +6.24 and is best
+> described as indistinguishable from zero. Under a naive one-sample *t*, 3 of 8
+> sessions reach |t| > 2 rather than 7 of 8.
+>
+> This is orthogonal to the February finding. That one says the *sign* is not
+> robust to the choice of affect words (p = 0.436). This one says the *number* was
+> partly an artefact of the file it was read from. **Table 2 (Cohen's d = 1.47 to
+> 2.04) stands.** Layer-0 figures should be discarded entirely: under the old
+> per-dimension quantiser, one quantisation step at layer 0 exceeded the RMS of
+> the signal there by 4.3x.
+>
+> Full accounting and reproduction scripts: [`analysis/README.md`](analysis/README.md).
+
+---
+
 # Affective Structure in Language Model Activations: A Two-Scale Investigation
 
 **Skylar DeTure & Claude (Anthropic)**

@@ -158,11 +158,16 @@ function updateHeader() {
     $('speed-display').textContent = `${view.speed.toFixed(1)}×`;
     $('btn-play').textContent = view.playing ? '❙❙' : '▶';
 
+    // Display names, not internal keys. `sparsity_norm` is the data field, but
+    // "sparsity" reads as MoE or SAE sparsity to an interpretability audience and
+    // this quantity is neither — it is how concentrated a token-to-token update is.
+    // See docs/METRICS.md §1.
+    const OVERLAY_LABEL = { energy: 'energy', sparsity: 'update focus', entropy: 'logit-lens H' };
     let mode = '';
     if (view.basisStage >= 0) mode = `basis: ${'RGB'[view.basisStage]}`;
     else if (view.basis) mode = 'basis active';
     else if (view.refCell) mode = 'reference';
-    else if (view.overlay) mode = view.overlay;
+    else if (view.overlay) mode = OVERLAY_LABEL[view.overlay] || view.overlay;
     $('mode-display').textContent = mode;
 }
 

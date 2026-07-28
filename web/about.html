@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why point a nervous system at a language model — Phosphenes</title>
+<meta name="description" content="The argument behind Phosphenes: per-word computation in language models, what it is comparable to, and why interpretability needs perceptual instruments.">
+<style>
+:root {
+    --bg: #0b0b12; --text: #e6e6f0; --dim: #9a9aae; --dimmer: #6a6a7e;
+    --amber: #ffc864; --rule: rgba(255,200,100,0.16);
+    --mono: 'Menlo','SF Mono','Consolas','Monaco',ui-monospace,monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--mono); font-size: 14px; line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 5vw 14vh;
+}
+.wrap { max-width: 720px; margin: 0 auto; }
+
+nav {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 0 40px; font-size: 11px;
+}
+nav a { color: var(--amber); text-decoration: none; border-bottom: 1px solid var(--rule); }
+nav a:hover { border-bottom-color: var(--amber); }
+nav .sp { flex: 1; }
+
+h1 { font-size: 25px; font-weight: 400; color: var(--amber); line-height: 1.3; letter-spacing: 0.3px; margin-bottom: 12px; }
+.standfirst { color: var(--dim); font-size: 14px; margin-bottom: 40px; }
+
+h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.8px;
+    color: var(--amber); margin: 46px 0 16px; font-weight: 600;
+}
+h3 { font-size: 14px; color: var(--text); margin: 26px 0 8px; font-weight: 600; }
+p { margin-bottom: 16px; }
+em { color: var(--dim); }
+b, strong { color: #fff; font-weight: 600; }
+a { color: var(--amber); }
+
+.lede {
+    border-left: 2px solid var(--amber); padding: 14px 18px;
+    background: rgba(255,200,100,0.05); margin: 0 0 34px;
+    font-size: 13.5px; line-height: 1.7;
+}
+
+table { width: 100%; border-collapse: collapse; margin: 18px 0 22px; font-size: 12.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+th { color: var(--dimmer); font-weight: 400; font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; }
+td.n { text-align: right; color: var(--amber); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+pre {
+    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 5px; padding: 14px 16px; margin: 18px 0;
+    font-size: 11.5px; line-height: 1.6; color: var(--dim);
+    overflow-x: auto;
+}
+code { color: var(--amber); font-size: 12.5px; }
+pre code { color: inherit; font-size: inherit; }
+
+.scale { margin: 26px 0; }
+.scale pre { color: var(--text); font-size: 11px; line-height: 1.55; }
+
+.callout {
+    border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px; margin: 26px 0; background: rgba(255,200,100,0.04);
+}
+.callout .big {
+    display: block; font-size: 21px; color: var(--amber);
+    font-variant-numeric: tabular-nums; margin-bottom: 6px;
+}
+.callout .cap { font-size: 12.5px; color: var(--dim); line-height: 1.65; }
+
+.warn {
+    border-left: 2px solid #ff9ec4; padding: 13px 17px; margin: 26px 0;
+    background: rgba(255,158,196,0.06); font-size: 13px; line-height: 1.7;
+}
+.warn b { color: #ffc0d8; }
+
+.obj { margin: 20px 0; }
+.obj > .q { color: var(--text); font-weight: 600; }
+.obj > .a { color: var(--dim); font-size: 13.5px; }
+
+ul { margin: 0 0 18px 20px; }
+li { margin-bottom: 7px; color: var(--dim); font-size: 13.5px; }
+li b { color: var(--text); }
+
+footer {
+    margin-top: 56px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11.5px; color: var(--dimmer); line-height: 1.7;
+}
+@media (max-width: 640px) {
+    body { font-size: 13.5px; padding: 0 5vw 12vh; }
+    h1 { font-size: 21px; }
+    .scale pre { font-size: 8.5px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+    <a href="index.html">← the instrument</a>
+    <span class="sp"></span>
+    <span style="color:var(--dimmer)">Phosphenes</span>
+</nav>
+
+<h1>Why point a nervous system at a language model</h1>
+<p class="standfirst">
+    The argument behind Phosphenes, with the numbers worked through and the
+    objections stated.
+</p>
+
+<div class="lede">
+    A 32-billion-parameter transformer spends about <b>7 × 10<sup>10</sup></b>
+    floating-point operations producing one word. A human brain, on the best
+    available estimates, spends something like <b>10<sup>13</sup>–10<sup>14</sup></b>
+    operation-equivalents per word. Those are <b>two to three orders of magnitude
+    apart, and the model is the smaller one.</b> They are not comparable, and this
+    page does not claim they are. It claims the conclusion does not need them to be.
+</div>
+
+<h2>1 · The model's number</h2>
+
+<p>
+    Qwen3-VL-32B-Instruct is <b>dense</b> — not a mixture of experts, so every
+    parameter participates in every token. Hidden size 5,120, 64 layers, which
+    agrees with what I measured directly from the extracted activations rather than
+    taking on trust.
+</p>
+
+<p>The standard forward-pass cost per token is Kaplan et al. (2020), Table 1:</p>
+
+<pre><code>C_forward ≈ 2N + 2 · n_layer · n_ctx · d_attn</code></pre>
+
+<p>
+    The first term is the two operations — a multiply and an add — each parameter
+    contributes. The second is attention over the context, which at the ~3,000-token
+    conversations here comes to <b>5–9%</b> of the total: real, but not dominant.
+    For N = 32 × 10<sup>9</sup>:
+</p>
+
+<div class="callout">
+    <span class="big">≈ 7 × 10<sup>10</sup> FLOPs per token</span>
+    <span class="cap">
+        Seventy billion arithmetic operations for one word — roughly what the
+        fastest computer on earth could do in a second in the early 1990s. The
+        model spends it on one word and then discards it.
+    </span>
+</div>
+
+<p>Two other framings of the same fact, more useful for what follows:</p>
+
+<div class="callout">
+    <span class="big">979,251,200 numbers</span>
+    <span class="cap">
+        is the <b>state</b> the model moves through for one 2,990-token
+        conversation: 2,990 tokens × 64 layers × 5,120 dimensions, about 1.96 GB
+        at the precision it was computed in. That is the object the instrument
+        displays.
+    </span>
+</div>
+
+<h2>2 · The brain's number, and why it is not really a number</h2>
+
+<p>
+    The reference is Joe Carlsmith's 2020 report for Open Philanthropy,
+    <em>How Much Computational Power Does It Take to Match the Human Brain?</em>
+    Its mechanistic-method range is <b>10<sup>13</sup>–10<sup>17</sup> FLOP/s,
+    median around 10<sup>15</sup></b>, with his stated position that this is
+    <em>"more likely than not… enough"</em> and under 10% credence on requirements
+    above 10<sup>21</sup>.
+</p>
+
+<p>Two things about that matter more than its value.</p>
+
+<h3>It is a sufficiency budget, not a measurement.</h3>
+<p>
+    Carlsmith asks how much computation would be <em>enough to match</em> the
+    brain's task performance — not how much the brain <em>performs</em>. Those are
+    different questions, and the second is not answerable with current
+    neuroscience. Anyone treating 10<sup>15</sup> FLOP/s as a measured property of
+    brains has misread the source.
+</p>
+
+<h3>The historical anchors disagree by nine orders of magnitude.</h3>
+<ul>
+    <li><b>Moravec</b> — 10<sup>14</sup>, and it should be dated <em>1998</em>.
+        The 1988 <em>Mind Children</em> figure was 10<sup>13</sup>; the two differ
+        because a scaling assumption changed from a "compromise value" of 10,000×
+        to a volume-based 100,000×. Both standard secondary sources conflate them.</li>
+    <li><b>Kurzweil</b> — 10<sup>16</sup>, his own deliberate round-up from
+        underlying estimates of 10<sup>14</sup>–10<sup>15</sup>.</li>
+    <li><b>Sandberg &amp; Bostrom</b> — 10<sup>15</sup> for an analog population
+        model, 10<sup>18</sup> for a spiking network, 10<sup>25</sup> at the
+        metabolome, 10<sup>43</sup> for molecular simulation. Entirely dependent on
+        what you decide counts as the relevant level of description.</li>
+</ul>
+
+<p>
+    That spread is not sloppiness. It is the honest consequence of a question with
+    no level-independent answer.
+</p>
+
+<p>
+    For a per-word figure: human silent reading averages <b>238 words per minute =
+    3.97 words/s</b> (Brysbaert 2019, meta-analysis of 190 studies, CI 230–246).
+    Dividing whole-brain compute by a reading rate is crude — most of the brain is
+    not reading — but it is the comparison people reach for, so here it is
+    explicitly.
+</p>
+
+<h2>3 · The comparison, stated honestly</h2>
+
+<table>
+    <tr><th>per word</th><th style="text-align:right">operations</th></tr>
+    <tr><td>Qwen3-VL-32B-Instruct, dense, 3k context</td><td class="n">≈ 7 × 10<sup>10</sup></td></tr>
+    <tr><td>Human, Carlsmith median ÷ 3.97 words/s</td><td class="n">≈ 2.5 × 10<sup>14</sup></td></tr>
+    <tr><td>Human, synapse counts × measured firing rates</td><td class="n">≈ 10<sup>12</sup>–10<sup>13</sup></td></tr>
+</table>
+
+<p>
+    <b>The best-supported gap is 2–3 orders of magnitude — roughly 72× to
+    1,810×.</b> Carlsmith's median instead gives about 3.4 orders of magnitude.
+    The full defensible band on both sides is 1.4 to 6.4.
+</p>
+
+<div class="warn">
+    <b>So the model does 100 to 1,000 times less computation per word than a human
+    brain</b> on the estimates least unfavourable to the comparison, and possibly a
+    million times less.
+    <br><br>
+    I want to be blunt, because "comparable to a human, order of magnitude" is the
+    claim I set out to support, and the numbers do not support it. If you see that
+    claim made about this project, including by me, it is wrong.
+</div>
+
+<h2>4 · Why the conclusion survives anyway</h2>
+
+<p>
+    The conclusion was never about parity. It is about which side of a threshold we
+    are on, and the threshold is not the brain — it is <b>the point past which a
+    person cannot follow a computation by reading it.</b>
+</p>
+
+<div class="scale">
+<pre>  10¹        10²        10⁶        10¹⁰·⁸        10¹³–10¹⁴
+   │          │          │            │              │
+ a hash    a regex    a JPEG      ONE WORD OF     one word of
+ lookup     match     decode     A 32B MODEL      a human brain
+   └──────────┴──────────┘            └──────────────┘
+      legible by reading             not legible by reading</pre>
+</div>
+
+<p>
+    The transformer sits about <b>nine orders of magnitude above</b> the largest
+    computation a person can actually trace, and two or three below a brain. On
+    this scale it is overwhelmingly nearer the brain end — and, the operative
+    point, it is on the far side of the line that matters. Nobody reads
+    7 × 10<sup>10</sup> operations. Nobody reads 979 million numbers.
+</p>
+
+<p>
+    Neuroscience has been on that side of the line since it started, and its
+    response was not to give up or read faster. It was to build instruments that
+    hand the data to the visual system: EEG traces, spike rasters, fMRI heat maps,
+    spectrograms. Those are not simplifications for the public — they are how
+    professionals work, because a trained eye extracts structure from a raster that
+    nobody extracts from the underlying table.
+</p>
+
+<p>
+    Interpretability is in the same position and has mostly not built that layer.
+    It has excellent tools for asking narrow questions with high precision —
+    activation patching, sparse autoencoders, circuit analysis — and comparatively
+    little for <em>"what is the shape of this whole episode, and where in it should
+    I be looking?"</em> That is a perception problem, and perception is the thing
+    humans are unreasonably good at and currently not using.
+</p>
+
+<div class="lede">
+    <b>The claim in the form it can bear.</b> Per-word computation in current
+    language models is far past the point of being readable, and within a few
+    orders of magnitude of biological scale. In every other domain where that has
+    been true, progress required instruments engaging the whole sensory apparatus —
+    vision first, then binding across modalities, then trained intuition.
+    Interpretability has barely started on that, and the fact that it is unbuilt is
+    a larger opportunity than any individual technique.
+</div>
+
+<h2>5 · Objections</h2>
+
+<div class="obj">
+    <p class="q">"FLOPs and synaptic events are not the same unit."</p>
+    <p class="a">Correct, and the deepest problem with the whole comparison. A
+    multiply-add is well defined; a synaptic event is an analog physical process
+    whose information content depends on what you think the neuron computes.
+    Carlsmith spends much of his report on exactly this, which is why the output is
+    a four-order-of-magnitude range rather than a number. Treat the table above as
+    orientation, not measurement.</p>
+</div>
+
+<div class="obj">
+    <p class="q">"Most of the brain is not processing the current word."</p>
+    <p class="a">Also correct. The per-word figure includes homeostasis, vision,
+    motor control and everything else running concurrently. Restricting to cortex
+    would cut it — Azevedo et al. put 19% of the brain's neurons there — and
+    restricting to language-selective regions would cut it much further. Every
+    honest restriction moves the human number <b>down</b>, narrowing the gap and
+    helping the argument. I have not applied them, because applying corrections
+    selectively is how one manufactures a favourable number.</p>
+</div>
+
+<div class="obj">
+    <p class="q">"One synapse may be worth many operations."</p>
+    <p class="a">Dendritic computation, spike timing and neuromodulation could each
+    make one synapse worth far more than one FLOP. This moves the human number
+    <b>up</b> and widens the gap. It is the strongest objection in the direction
+    that hurts.</p>
+</div>
+
+<div class="obj">
+    <p class="q">"Per-token cost excludes training."</p>
+    <p class="a">Yes — ~10<sup>23</sup>–10<sup>25</sup> FLOPs for a frontier model,
+    and a human's development is not free either. Neither belongs in a per-word
+    comparison, and including one without the other would be the error.</p>
+</div>
+
+<div class="obj">
+    <p class="q">"Serial depth differs enormously."</p>
+    <p class="a">64 sequential transformations per token, against perhaps 10–20
+    synaptic steps within a reaction time but vastly more parallel width. Two
+    systems can spend similar totals with completely different computational
+    structure — and structure is what interpretability is actually about.</p>
+</div>
+
+<div class="obj">
+    <p class="q">"This is an argument for prettier pictures."</p>
+    <p class="a">It is an argument for instruments, which are judged by whether they
+    let you find things and then check them. So this one ships with the checks: the
+    guided tour states a measurement for every pattern it points at, 57 of those are
+    re-verified from source by <code>analysis/verify_tour_claims.py</code>, and the
+    divergence view self-tests on load and reports failure on screen. A
+    visualisation that cannot be checked is decoration; the difference is
+    testability, not taste.</p>
+</div>
+
+<h2>6 · Sources</h2>
+<ul>
+    <li><b>Kaplan et al. (2020)</b>, <em>Scaling Laws for Neural Language Models</em>,
+        Table 1 — forward-pass FLOP accounting. arXiv:2001.08361</li>
+    <li><b>Hoffmann et al. (2022)</b>, <em>Training Compute-Optimal Large Language
+        Models</em> — the 2N convention. arXiv:2203.15556</li>
+    <li><b>Carlsmith (2020)</b>, Open Philanthropy — 10<sup>13</sup>–10<sup>17</sup>
+        FLOP/s, median 10<sup>15</sup>, and the sufficiency-versus-measurement
+        distinction most citations drop.</li>
+    <li><b>Brysbaert (2019)</b>, <em>Journal of Memory and Language</em> — 238 wpm,
+        190 studies, CI 230–246.</li>
+    <li><b>Moravec (1998)</b> — 10<sup>14</sup>. <em>Mind Children</em> (1988,
+        pp. 57–60) gives 10<sup>13</sup> via a different assumption; do not cite as
+        one figure.</li>
+    <li><b>Kurzweil (2005)</b> — 10<sup>16</sup> cps, rounded up from
+        10<sup>14</sup>–10<sup>15</sup>.</li>
+    <li><b>Sandberg &amp; Bostrom (2008)</b>, <em>Whole Brain Emulation: A
+        Roadmap</em> — the level-dependence.</li>
+    <li><b>Azevedo et al. (2009)</b> — neuron counts by region.</li>
+    <li><b>Attwell &amp; Laughlin (2001)</b>; <b>Lennie (2003)</b> — energy budgets
+        constraining mean firing rates.</li>
+</ul>
+
+<h3>Provenance, stated because it should be</h3>
+<p style="color:var(--dim); font-size:13px">
+    The first four were verified against primary sources. Two caveats carried
+    forward rather than hidden: the <em>Mind Children</em> page attributions came
+    from <b>OCR text only</b> — cross-checked two independent ways and
+    high-confidence, but a stray OCR error inside a quoted sentence cannot be
+    excluded, so verify against a page image before quoting verbatim in print. And
+    several published criticisms of this genre of estimate are referred to here in
+    substance, but their specific wordings were not verified in this pass, so none
+    is quoted.
+</p>
+
+<footer>
+    <a href="index.html">← back to the instrument</a> ·
+    the longer version of this argument, with the full source list, is
+    <code>docs/THESIS.md</code> in the repository ·
+    definitions and caveats for every quantity the tool displays are
+    <code>docs/METRICS.md</code> ·
+    the record of a finding this project got wrong is
+    <code>analysis/README.md</code>
+    <br><br>
+    DeTure &amp; DeTure, 2026 · MIT licensed
+</footer>
+
+</div>
+</body>
+</html>

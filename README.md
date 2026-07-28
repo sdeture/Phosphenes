@@ -201,20 +201,37 @@ docs/                      THESIS, METRICS, ARCHITECTURE, figures.
 
 ## Honesty
 
-This section is not decoration. One of this project's own findings was wrong, the
-project's own falsification test had already said so, and it took an audit to
-notice. The record is in [`analysis/README.md`](analysis/README.md).
+This section is not decoration. The record is in
+[`analysis/README.md`](analysis/README.md).
 
-**Superseded.** The "tonic affect baseline" reported in
-`AFFECTIVE_STRUCTURE_REPORT.md` and in
-[`the_instrument_problem.md`](the_instrument_problem.md) as negative in *eight of
-eight* sessions is **seven of eight** on float data, with the grand mean falling
-from −14.63 to −7.31. Exactly **50%** of the reported magnitude was a quantiser
-that truncated instead of rounding — invisible in a display, fatal in an average.
-Only three of eight sessions are individually distinguishable from zero, and a
-permutation test in the repository already gave **p = 0.436**. The large,
-robust part of that result — separation between positive- and negative-affect
-tokens, Cohen's *d* 1.47–2.04 — survives intact and is a different claim.
+**Already corrected, in February, by the project itself.** The
+"tonic negative affect baseline" reported across eight sessions was submitted to a
+permutation test three days later, which returned **p = 0.436** — randomly
+re-partitioning the same tokens into "positive" and "negative" produces an equally
+negative baseline 44% of the time. `BASELINE_INVESTIGATION.md` is a whole document
+devoted to falsifying the project's own headline result, and it concludes that the
+negative sign "is not a robust property of the activation geometry."
+`AFFECTIVE_STRUCTURE_REPORT.md` carries that correction inline, with the
+superseded sentence struck through. That is the sequence one wants, and it happened
+without prompting.
+
+**Newly corrected here, and of a different kind.** What the February work did not
+catch is that even the *descriptive* claim was wrong, for a reason that has nothing
+to do with statistics: the analysis read the display bundles, whose quantiser
+**truncated instead of rounding**, biasing every value down by half a step. A
+difference of means cancels that; a mean projection does not. On float data the
+baseline is negative in **seven** of eight sessions rather than eight, and the grand
+mean is **−7.31** rather than −14.63 — exactly **50%** of the reported magnitude was
+the encoder. Only three of eight sessions are individually distinguishable from
+zero.
+
+The lesson is narrower and more portable than "be careful": **do not compute
+statistics on a display format.** The float source is four files away.
+
+The large, robust part of the original result — separation between positive- and
+negative-affect tokens, Cohen's *d* 1.47–2.04, direction stable to cosine
+similarity 0.9994 under quantisation — survives intact, and is a different claim
+from the baseline.
 
 **Bugs found and fixed while preparing this release.** All in
 `analysis/README.md`; the two worth naming here are a display whose layer axis

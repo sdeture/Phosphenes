@@ -80,7 +80,7 @@ a:hover { border-bottom-color: var(--amber); }
     font-size: 11.5px; color: var(--dim);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-#mode-display { color: var(--amber); min-width: 74px; font-size: 11px; }
+#mode-display { color: var(--amber); min-width: 104px; font-size: 11px; }
 #position-display { min-width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
 
 .hbtn {

@@ -69,9 +69,10 @@ export const MAIN_TOUR = [
     },
     {
         title: 'Depth has structure, and it is horizontal',
-        body: `Switch to the <b>sparsity</b> overlay: how concentrated each token-to-token
-               update is in a few of the 5,120 residual dimensions. Bright means the update
-               was focused; dark means it was spread thin across the whole state.`,
+        body: `Switch to the <b>focus</b> overlay: how concentrated each token-to-token
+               update is across the 5,120 residual dimensions. Bright means the update was
+               concentrated in a few of them; dark means it was spread thin across all of
+               them. (Not MoE or SAE sparsity — a different thing with a similar name.)`,
         look: `Two horizontal bands, one low and one high, with a quiet trough between them.`,
         evidence: `Layer-mean sparsity (0.6*top1_frac + 0.4*top25_frac) has local maxima at
                    layer 9 (0.548) and layer 44 (0.575), with a trough at layer 28 (0.463).

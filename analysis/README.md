@@ -83,10 +83,19 @@ converges on the float answer, which is 7/8.
 - **The cross-architecture replication.** `baseline_investigation_results.json`
   records `test_3_cross_architecture` as **100% errors** — every input file was
   missing. That test never ran. Any draft citing it cites nothing.
-- **Statistical significance, which the project's own falsification test had
-  already denied.** The 1,000-iteration permutation test over affect labels gave
-  **p = 0.436**. That result was in the repository before this audit. The
-  narrative claim outran the project's own null test, and the null test was right.
+- **Statistical significance — but this the project had already caught and
+  published.** A 1,000-iteration permutation test over affect labels gave
+  **p = 0.436**, three days after the original report.
+  `BASELINE_INVESTIGATION.md` is a document devoted to falsifying the project's
+  own headline finding and it says so plainly: *"The negative sign is an artifact
+  of which 30 words were chosen."* `AFFECTIVE_STRUCTURE_REPORT.md` carries that
+  correction inline, with the superseded sentence struck through.
+
+  **This audit adds a different failure, not a repeat of that one.** The February
+  correction was statistical: the *sign* is not robust to which words define the
+  axis. What nobody caught is that the *descriptive* number was also wrong, for a
+  data-handling reason — the analysis read a display format. Both corrections are
+  needed, and only the second one is new.
 
 ### Why it was fragile in the first place
 
