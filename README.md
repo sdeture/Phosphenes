@@ -212,58 +212,6 @@ BASELINE_INVESTIGATION.md       The project falsifying its own headline result.
 
 ---
 
-## Honesty
-
-This section is not decoration. The record is in
-[`analysis/README.md`](analysis/README.md).
-
-**Already corrected, in February, by the project itself.** The
-"tonic negative affect baseline" reported across eight sessions was submitted to a
-permutation test three days later, which returned **p = 0.436** — randomly
-re-partitioning the same tokens into "positive" and "negative" produces an equally
-negative baseline 44% of the time. `BASELINE_INVESTIGATION.md` is a whole document
-devoted to falsifying the project's own headline result, and it concludes that the
-negative sign "is not a robust property of the activation geometry."
-`AFFECTIVE_STRUCTURE_REPORT.md` carries that correction inline, with the
-superseded sentence struck through. That is the sequence one wants, and it happened
-without prompting.
-
-**Newly corrected here, and of a different kind.** What the February work did not
-catch is that even the *descriptive* claim was wrong, for a reason that has nothing
-to do with statistics: the analysis read the display bundles, whose quantiser
-**truncated instead of rounding**, biasing every value down by half a step. A
-difference of means cancels that; a mean projection does not. On float data the
-baseline is negative in **seven** of eight sessions rather than eight, and the grand
-mean is **−7.31** rather than −14.63 — exactly **50%** of the reported magnitude was
-the encoder. Only three of eight sessions are individually distinguishable from
-zero.
-
-The lesson is narrower and more portable than "be careful": **do not compute
-statistics on a display format.** The float source is four files away.
-
-The large, robust part of the original result — separation between positive- and
-negative-affect tokens, Cohen's *d* 1.47–2.04, direction stable to cosine
-similarity 0.9994 under quantisation — survives intact, and is a different claim
-from the baseline.
-
-**Bugs found and fixed while preparing this release.** All in
-`analysis/README.md`; the two worth naming here are a display whose layer axis
-was inverted relative to every one of its own coordinate readouts (so the
-custom-basis tool silently sampled mirror-image cells), and per-session
-normalisation that made two runs with a mathematically identical prefix render
-differently.
-
-**Limits.** One model, eight conversations, selected because the model chose
-consciousness-adjacent themes — useful as a stress case, useless as a base rate.
-The seam score is a heuristic with a measured effect size, not a detector
-validated on held-out labels. Johnson–Lindenstrauss at 16 dimensions is a loose
-approximation, and licenses claims about distances but not about individual
-coordinates. The cross-architecture replication in `baseline_investigation.py`
-**never ran** — its inputs were missing — so nothing here is known to generalise
-beyond this one model.
-
----
-
 ## Reproducing
 
 ```bash
