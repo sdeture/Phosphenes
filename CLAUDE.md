@@ -30,10 +30,11 @@ data to anyone.
    interactive tools sample mirror-image cells while drawing markers correctly.
 5. Serve `web/` over HTTP (`python3 -m http.server 8899 --directory web`).
    `file://` cannot work — ES modules and `fetch`.
-6. **The argument lives in two places and they must agree.** `docs/THESIS.md` and
-   `web/about.html` are the same argument at two lengths. A correction applied to
-   one and not the other has already happened once, and shipped. When you touch
-   either, diff both.
+6. **`web/about.html` is the SHORT version and should stay short** (~850 words).
+   It states the idea — a model's per-word computation is in nervous-system
+   territory, so use more of the nervous system to read it — and points at
+   `docs/THESIS.md` for the arithmetic. Do not migrate the argument back into it.
+   The webapp's job is a good tutorial plus a light explanation, not a paper.
 
 ---
 
@@ -59,11 +60,10 @@ data to anyone.
   `BASELINE_INVESTIGATION.md` — do not describe that as a miss. The second is a
   data-handling error (truncating quantiser): 7/8 sessions not 8/8, grand mean
   −7.31 not −14.63. Cohen's *d* 1.47–2.04 survives.
-- **The self-reports were elicited under a leading prompt.** The turn-3 survey
-  preamble asserts that introspection is real before asking anything. This is
-  disclosed in `README.md`, `web/about.html` §5 and `docs/PROVENANCE.md` §3. It
-  bears on the *text* of the self-reports and not on the activation geometry. Never
-  quote a self-report from this corpus without the preamble.
+- **Do not add hedges, caveats or qualifiers to Skylar's work unasked.** The
+  elicitation design is deliberate and it is his. Describe the corpus; do not
+  editorialise about it, and do not annotate his choices as though they were
+  oversights. Standing correction, 2026-07-27 — this cost a whole pass to undo.
 - **`the_instrument_problem.md` is Claude's own essay**, written here in February
   2026 — same author as `BASELINE_INVESTIGATION.md` and
   `AFFECTIVE_STRUCTURE_REPORT.md`, which are bylined and dated the same day.

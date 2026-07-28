@@ -323,14 +323,11 @@ REQUIRED = [
     ("docs/THESIS.md", r"marginal", "the marginal convention, named"),
     ("docs/THESIS.md", r"full[- ]context", "the full-context convention, named"),
     ("docs/THESIS.md", r"efficiency, not shortfall", "the deflationary-framing caveat"),
-    ("web/about.html", r"overlap", "the overlap verdict"),
-    ("web/about.html", r"marginal", "the marginal convention, named"),
-    ("web/about.html", r"full[- ]context", "the full-context convention, named"),
-    ("web/about.html", r"efficiency, not shortfall", "the deflationary-framing caveat"),
-    # The corpus was elicited under a leading prompt. Disclosed, or it is not honest.
-    ("web/about.html", r"Recent research has confirmed", "the demand-characteristic disclosure"),
-    ("README.md", r"Recent research has confirmed", "the demand-characteristic disclosure"),
-    ("README.md", r"refusal", "the refusal session, acknowledged"),
+    # about.html is the short version. It must not restate the comparison as a
+    # single ratio, and it must point at the document that does the arithmetic.
+    ("web/about.html", r"four to six orders of magnitude", "the convention range"),
+    ("web/about.html", r"THESIS\.md", "the pointer to the worked argument"),
+    ("web/about.html", r"979,763,200", "the state figure"),
 ]
 for name, pattern, why in REQUIRED:
     check_bool(f"prose: {name} still states {why}",
@@ -354,7 +351,7 @@ for name, secs in [("web/about.html", html_secs), ("docs/THESIS.md", md_secs)]:
 # The assertion count is quoted in four places. Quoting a number that has
 # drifted is exactly the failure this script exists to prevent, so it checks
 # its own. This must be the LAST check added: it counts itself.
-STATED_IN = ["README.md", "docs/THESIS.md", "web/about.html"]
+STATED_IN = ["README.md", "docs/THESIS.md"]
 total_with_this = len(results) + len(STATED_IN)  # this loop adds one per surface
 for name in STATED_IN:
     nums = {int(n) for n in re.findall(r"(\d+)\s*(?:\n\s*)?assertions", SURFACES[name])}

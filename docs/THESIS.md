@@ -26,10 +26,8 @@ That was overconfident. It compared a *marginal-with-cache* model figure against
 against the largest on the other — without saying so. Retracted below.
 
 **On the corpus.** This document argues about computation, not about the eight
-recordings. Where they came from, what the model was asked, and the fact that the
-self-reports in them were elicited under a **leading prompt** are all set out in
-[`PROVENANCE.md`](PROVENANCE.md). Read that before quoting anything a model says
-in this dataset.
+recordings. Where they came from, the prompts, and the decoding conditions are in
+[`PROVENANCE.md`](PROVENANCE.md).
 
 ---
 
@@ -311,7 +309,7 @@ the range is softer than it looks.
 instruments, which are judged by whether they let you find things you would not
 otherwise find and then check them. So Phosphenes ships with the checks: the
 guided tour states a measurement for every pattern it points at;
-`analysis/verify_tour_claims.py` recomputes **113 assertions** from source —
+`analysis/verify_tour_claims.py` recomputes **108 assertions** from source —
 the tour's numbers, every compute figure in this document, and a regression test
 on the argument's own wording, added after a retracted claim survived in one
 surface and not the other. The divergence view runs a self-test on load and
