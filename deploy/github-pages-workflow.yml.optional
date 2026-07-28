@@ -1,0 +1,57 @@
+name: Deploy the web viewer to GitHub Pages
+
+# The site is web/, which is neither the repo root nor /docs, so Pages is
+# deployed from an artifact rather than from a branch. The checkout is sparse
+# and shallow on purpose: data/ holds ~98 MB of float32 .npz that the site
+# does not need and CI should not pull on every deploy.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out web/ only
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: web
+          fetch-depth: 1
+
+      - name: Fail if a session bundle is missing
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+          root = pathlib.Path('web/data')
+          idx = json.loads((root / 'sessions.json').read_text())
+          missing = [s['file'] for s in idx['sessions'] if not (root / s['file']).exists()]
+          if missing:
+              sys.exit(f"sessions.json lists bundles that are not present: {missing}")
+          print(f"{len(idx['sessions'])} session bundles present")
+          PY
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
