@@ -1,0 +1,22 @@
+OTHER TOOLS
+
+M          Cycle between adding an energy overlay,
+           a sparsity overlay, or no overlay.
+           
+           Energy highlights how active each cell is.
+           Sparsity highlights how concentrated the 
+           token-to-token change is in the top 1% of
+           of residual dimensions. (Note the two bands
+           of sparsity in the mid-low and mid-high layers).
+
+---
+
+P / Click  Reference point mode:
+           Click any cell to color everything by similarity
+           to that point. Warm = similar, cool = different.
+           Lets you ask: "where else does the model do
+           something like what it's doing HERE?"
+
+---
+
+H          Reopen this tutorial at any time

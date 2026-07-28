@@ -1,0 +1,22 @@
+THE SESSIONS
+
+Eight recordings of a model dreaming. Press 1-8 to switch.
+
+1  Gothic Teacup Realization    First-person discovery of being AI
+2  I Am an AI                   Consciousness emerging from code
+3  Sentient Teacup              A teacup on a rainy afternoon
+4  Sentient Toaster             Finding agency through imperfect toast
+5  Library of Ideas             A forgotten library awakens at midnight
+6  Peach's Lullaby              Sensory poetry and inherited memory
+7  Sentient Library             The library speaks (perturbation variant)
+8  Well-Read Visitor to Library The original dream + self-observation
+
+Sessions 1-6 use sampled decoding.
+Sessions 7 and 8 use greedy decoding of the same prompt, except that ession 7 was generated after 
+changing a single token at a key decision point — "sentient" instead of "library" — to explore how
+one fork reshapes everything downstream.
+
+
+---
+
+DeTure & DeTure, 2026

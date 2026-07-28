@@ -1,0 +1,21 @@
+PHOSPHENES
+Seeing the light inside the architecture
+
+
+When you press on your closed eyes, you see phosphenes —
+light generated not by the world, but by your own neural activity.
+
+This instrument does something similar for language models. It 
+makes visible the internal states of an LLM as it thinks, letting 
+you watch patterns form, shift, and resolve across tokens and 
+transformer layers. You'll see an animation of the residual stream 
+compressed to 16 dimensions via Johnson–Lindenstrauss projection 
+and color coded either by PCA or your own selected contrast vectors.
+
+This exploration includes transcripts of Qwen3-VL-32B-Instruct
+curated from another open project of mine in which models write
+their own prompts "for their own enjoyment" and reflect afterwards
+on the experience. Qwen3-VL-32B-Instruct selected consciousness 
+related themes in 31 out of 40 self-directed conversations, about 
+twice as often as the average model.
+

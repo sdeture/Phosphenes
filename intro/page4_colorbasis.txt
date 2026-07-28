@@ -1,0 +1,21 @@
+COLOR BASIS: CHOOSE YOUR OWN VIEW
+
+Press C in the viewer to define custom R/G/B axes as averages of groups of cells or as 
+contrasts between groups of cells. This is the most powerful feature of the interface.
+
+
+After pressing C, you'll click on cells to add them to the R "source" group, and shift+click cells 
+to add them to the R "contrast" group. Press enter to move on to G, then enter again to move on to B.
+
+Each color channel becomes a projection onto the defined direction: 
+mean(source) − mean(contrast). 
+If you don't select contrasts, the color channel is just mean(source).
+
+---
+Toy Experiments:
+
+Compare cells in the user's message and contrast them with cells in the assistant's response. Are 
+some assistant cells more "user-like" than others?
+
+Select groups for three topical themes using only cells from mid-low layers of each theme. Do the same 
+using only cells from mid-high layers of each theme. How do these views differ?

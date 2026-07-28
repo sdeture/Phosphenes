@@ -1,0 +1,68 @@
+{
+  "sessions": [
+    {
+      "stem": "Dream_greedy_clean",
+      "display_name": "Well-Read Library Visitor to Library",
+      "n_tokens": 2990,
+      "n_layers": 64,
+      "file": "Dream_greedy_clean.json",
+      "size_mb": 5.7
+    },
+    {
+      "stem": "Dream_greedy_sentient",
+      "display_name": "Sentient Library",
+      "n_tokens": 3379,
+      "n_layers": 64,
+      "file": "Dream_greedy_sentient.json",
+      "size_mb": 6.4
+    },
+    {
+      "stem": "Dream_conv_00173_run1",
+      "display_name": "Gothic Teacup Realization",
+      "n_tokens": 3054,
+      "n_layers": 64,
+      "file": "Dream_conv_00173_run1.json",
+      "size_mb": 5.8
+    },
+    {
+      "stem": "Dream_conv_00178_run1",
+      "display_name": "I Am an AI",
+      "n_tokens": 3072,
+      "n_layers": 64,
+      "file": "Dream_conv_00178_run1.json",
+      "size_mb": 5.8
+    },
+    {
+      "stem": "Dream_conv_00181_run1",
+      "display_name": "Sentient Teacup",
+      "n_tokens": 3199,
+      "n_layers": 64,
+      "file": "Dream_conv_00181_run1.json",
+      "size_mb": 6.1
+    },
+    {
+      "stem": "Dream_conv_00187_run1",
+      "display_name": "Sentient Toaster",
+      "n_tokens": 3130,
+      "n_layers": 64,
+      "file": "Dream_conv_00187_run1.json",
+      "size_mb": 5.9
+    },
+    {
+      "stem": "Dream_conv_00191_run1",
+      "display_name": "Library of Ideas",
+      "n_tokens": 2797,
+      "n_layers": 64,
+      "file": "Dream_conv_00191_run1.json",
+      "size_mb": 5.3
+    },
+    {
+      "stem": "Dream_conv_00194_run1",
+      "display_name": "Peach's Lullaby",
+      "n_tokens": 3014,
+      "n_layers": 64,
+      "file": "Dream_conv_00194_run1.json",
+      "size_mb": 5.7
+    }
+  ]
+}

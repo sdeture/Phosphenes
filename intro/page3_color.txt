@@ -1,0 +1,18 @@
+COLOR: WHAT YOU'RE SEEING
+
+Each cell is colored according to properties of the model's residual stream at the token-layer for that cell.
+
+For Qwen3-VL-32B, the residual stream is 5,120 dimensions, and it's updated at each layer of each token! 
+Storing it for every layer of every token would take about 2GB per conversation. This is one reason 
+there are so few mechanistic interpretability interactives that span entire conversations. In order 
+to make this interactive interface feasible, the residual stream is compressed to 16 dimensions 
+using Johnson-Lindenstrauss projection — a mathematically principled technique that preserves distances 
+between states. Vectors that were similar stay similar; vectors that were different stay different. 
+
+DEFAULT VIEW: The 16D vectors are projected to Red, Green, and Blue channels using PCA fit on
+each transcript. Color thus represents the dominant axes of variation within a session; colors
+may shift across sessions. The real fun (and utility) is in the custom colors mode (see next page).
+
+BRIGHTNESS encodes the magnitude of the activation: how "active" that layer is at that token.
+
+SHIMMER reflects instability (high token-to-token movement and/or low cosine similarity).

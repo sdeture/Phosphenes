@@ -1,0 +1,21 @@
+READING THE DISPLAY
+
+Each column is one token. Each row is one layer.
+Early layers at the bottom, final layers at the top. 
+
+The bar at the top shows who is speaking:
+blue = user        amber = assistant
+
+The text panel on the right shows the conversation. 
+If the scrolling text becomes distracting, you can 
+hide it with the tab key.
+
+---
+
+BASIC CONTROLS
+   Space        play / pause
+   <- ->        step one token (when paused)
+   up/down      speed up / slow down
+   1-8          switch between sessions
+   Tab          toggle text panel
+   I            toggle inspector (hover for details)
