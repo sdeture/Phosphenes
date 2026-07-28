@@ -144,11 +144,14 @@ data to anyone.
     known failure mode with a written record, not a new judgement.
 - **`Dream_greedy_baseline` is excluded from both viewers on purpose** (`SKIP_STEMS`),
   which is why nine stems live in `data/` and eight in `web/data/`. Not an
-  incomplete conversion; do not "fix" it.
+  incomplete conversion; do not "fix" it. As of 2026-07-28 `compute_shared_pca.py`
+  honours the same `SKIP_STEMS` and records its session list into
+  `shared_pca_transform.npz`, so one declaration governs the whole pipeline —
+  it used to glob all nine while the converter pooled eight.
 
 ---
 
-## State — 2026-07-27: PUBLISHED
+## State — 2026-07-28: PUBLISHED, corrections live
 
 - **Repo:** https://github.com/sdeture/Phosphenes (public)
 - **Site:** https://sdeture.github.io/Phosphenes/ — served from the `gh-pages`
@@ -158,7 +161,19 @@ data to anyone.
 
 Prepared for an AI-welfare / interpretability audience. The web viewer, guided
 tour, logit-lens entropy overlay and one-token fork view all ship; the fork
-self-test passes on the live site. Docs: `README.md`, `docs/THESIS.md`,
+self-test passes on the live site.
+
+The twelve definition corrections shipped 2026-07-28 (`847c3a1` → gh-pages
+`e5abdaa`) and were verified **against the live CDN**, not just against the
+script's exit code: all 8 bundles serve the corrected output entropy (0.920–1.048
+nats) with token 0 no longer saturated, the corrected copy is live in the tour
+and chrome, no "principal subspace of the residual stream" claim survives
+anywhere, and the fork prefix is still byte-identical across all seven arrays.
+Note for next time: the CDN served the *old* bundles for ~40s after a successful
+publish (`max-age=600`), so a check run immediately after the script will show
+stale data and mean nothing.
+
+Docs: `README.md`, `docs/THESIS.md`,
 `docs/METRICS.md`, `docs/ARCHITECTURE.md`, `docs/PROVENANCE.md`,
 `analysis/README.md`.
 
