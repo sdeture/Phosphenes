@@ -338,13 +338,20 @@ def load_model_data(base_dir: Path, stem: str) -> ModelData:
     input_ids = np.load(str(ids_path)).astype(np.int64)
     T, L, D = jl.shape
 
-    # Determine architecture
-    if L >= 48:
-        architecture = "Qwen30B"
-    elif L >= 40:
-        architecture = "Qwen14B"
+    # Model label, for the on-screen header.
+    #
+    # Read from metadata, not inferred from the layer count. Inferring it was
+    # wrong for 100% of the shipped data: all eight sessions have 64 layers, the
+    # old rule mapped "L >= 48" to the string "Qwen30B", and every screenshot of
+    # this tool therefore carried a false model attribution. The actual model id
+    # is right there in the metadata — `Qwen/Qwen3-VL-32B-Instruct`.
+    model_id = meta.get("model_id", "")
+    if model_id:
+        architecture = model_id.split("/")[-1]
     else:
-        architecture = "ERNIE"
+        architecture = f"unknown-{L}L"
+        print(f"[phosphenes] WARNING: {stem} metadata has no model_id; "
+              f"header will show '{architecture}'")
 
     # --- Per-layer quantile normalization ---
     energy_norm = np.zeros_like(jl_energy)
@@ -434,9 +441,19 @@ def load_model_data(base_dir: Path, stem: str) -> ModelData:
         heterogeneity[t] = float(-np.sum(p * np.log(p + 1e-12))) / math.log(max(2, n_clusters))
 
     # --- Heartbeat phase ---
+    # DEAD SUBSYSTEM, retained only so that removing it is a separate commit.
+    # `heartbeat_phase` is computed, stored on ModelData, and never read by any
+    # renderer; `EffectParams.heartbeat_alpha` is likewise unused, and
+    # `render_frame`'s docstring used to promise a "heartbeat phase overlay" step
+    # that does not exist in its body.
+    #
+    # The gate was previously `architecture == "Qwen30B"`, a string that was
+    # wrong for every shipped session (see the model-label note above). It is
+    # now keyed on the layer count so that fixing the label did not silently
+    # change behaviour — but nothing downstream observes the difference.
     heartbeat_phase = None
     has_heartbeat = False
-    if architecture == "Qwen30B":
+    if L >= 48:
         heartbeat_phase = np.arange(L, dtype=np.int32) % 6
         has_heartbeat = True
 
@@ -660,8 +677,27 @@ def get_current_turn(data: ModelData, token_idx: int) -> Optional[TurnBoundary]:
 
 def _extract_window(arr: np.ndarray, t_start: int, t_end: int,
                     n_layers: int, window_size: int) -> np.ndarray:
-    """Extract (L, W) window from a (T, L) array, padding left with zeros."""
-    chunk = arr[t_start:t_end + 1, :].T  # (L, span)
+    """Extract an (L, W) display window from a (T, L) array, padding left.
+
+    ROW 0 OF THE RESULT IS THE LAST LAYER, not the first. The returned array is
+    in *screen* order — top row first — and the display convention, stated in the
+    README and shared with the web viewer and with every depth-versus-time plot in
+    neuroscience, is layer 0 at the BOTTOM.
+
+    This flip used to be missing, and the consequence was worse than a mirrored
+    picture. Every coordinate consumer already assumed layer 0 at the bottom:
+    `update_inspector` maps screen y through `(1 - rel_y) * n_layers`, and the
+    reference-point and colour-basis overlays place a cell at `row = L - 1 - l`.
+    With an unflipped image those agreed with each other and disagreed with the
+    pixels, so a click at screen row r selected layer `L - 1 - r` — the mirror
+    layer — and then drew its marker back at row r, where it looked correct. The
+    custom colour basis was silently built from the wrong cells.
+
+    Fixing it here rather than in the overlays is deliberate: six call sites were
+    already correct with respect to the documented convention, and this one was
+    not.
+    """
+    chunk = arr[t_start:t_end + 1, :].T[::-1]      # (L, span), layer L-1 first
     span = chunk.shape[1]
     pad = window_size - span
     if pad > 0:
@@ -673,9 +709,12 @@ def _extract_window(arr: np.ndarray, t_start: int, t_end: int,
 
 def _extract_window_3d(arr: np.ndarray, t_start: int, t_end: int,
                        n_layers: int, window_size: int) -> np.ndarray:
-    """Extract (L, W, C) window from a (T, L, C) array, padding left."""
+    """Extract an (L, W, C) display window from a (T, L, C) array, padding left.
+
+    Row 0 is the last layer. See _extract_window for why.
+    """
     chunk = arr[t_start:t_end + 1, :, :]           # (span, L, C)
-    chunk = chunk.transpose(1, 0, 2)                # (L, span, C)
+    chunk = chunk.transpose(1, 0, 2)[::-1]         # (L, span, C), layer L-1 first
     span = chunk.shape[1]
     pad = window_size - span
     if pad > 0:
@@ -1063,25 +1102,32 @@ def render_frame(
     OPTIMIZED: Caches base work (depends on t_end and modes) and only
     recomputes turbulence/grain overlays each frame.
 
+    All effects are computed at CELL resolution (L x W, typically 64 x 160) and
+    scaled up at the end. Compositing at display resolution would be ~100x the
+    work for an identical result, since every effect is per-cell — including the
+    seam-glow blur, whose sigma is divided down to match.
+
     Pipeline:
       BASE (cached when t_end/modes unchanged):
-        1. Extract token window (cell res)
-        2. Base color from PCA -> RGB (cell res)
-        3. Brightness from energy (cell res)
-        4. Heartbeat phase overlay (cell res)
-        5. Seam glow (cell res)
-        6. Role-based dimming (cell res)
-        7. Metric highlight / special modes (cell res)
+        1. Extract token window (cell res, layer 0 at the BOTTOM row)
+        2. Base color from PCA -> RGB
+        3. Brightness from energy
+        4. Seam glow
+        5. Metric highlight / reference point / custom colour basis
 
       OVERLAY (every frame):
-        8. Turbulence from delta_l2 (cell res)
-        9. Grain from cos_prev instability (cell res)
+        6. Turbulence, amplitude from delta_l2
+        7. Grain, amplitude from cos_prev instability
 
       FINALIZE (every frame, on cached or fresh base):
-        10. Clamp + Gaussian smooth (cell res)
-        11. Expand to pixel grid + edge sharpness
-        12. Scale to canvas
-        13. Self-reference outlines (when paused)
+        8. Clamp + Gaussian smooth
+        9. Expand to the pixel grid + edge sharpness from update concentration
+       10. Scale to canvas
+
+    This list used to include a heartbeat overlay, role-based dimming and
+    self-reference outlines. None of the three were ever implemented in the body;
+    the numbering skipped them. They are gone from the list rather than from the
+    code so that deleting the dead computation is a reviewable commit of its own.
     """
     T, L = data.n_tokens, data.n_layers
     W = TOKENS_VISIBLE

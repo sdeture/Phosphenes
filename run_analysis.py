@@ -4,14 +4,21 @@ Analyzes 8 session JSON files for tonic affect baseline, turn-level affect struc
 and layer-wise affect emergence.
 """
 
+from pathlib import Path
+
+# Repository root, resolved from this file's location. Absolute paths were
+# hardcoded here, which made every one of these scripts unrunnable outside one
+# machine; two of them also pointed outside the repository entirely.
+_ROOT = Path(__file__).resolve().parent
+
 import json
 import base64
 import numpy as np
 import os
 import sys
 
-DATA_DIR = "/Users/skylardeture/Desktop/Phosphenes/web/data"
-OUTPUT_PATH = "/Users/skylardeture/Desktop/Phosphenes/analysis_results.json"
+DATA_DIR = str(_ROOT / "web" / "data")
+OUTPUT_PATH = str(_ROOT / "analysis_results.json")
 
 SESSION_FILES = [
     "Dream_conv_00173_run1.json",

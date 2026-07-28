@@ -6,7 +6,7 @@
       "n_tokens": 2990,
       "n_layers": 64,
       "file": "Dream_greedy_clean.json",
-      "size_mb": 5.7
+      "size_mb": 5.9
     },
     {
       "stem": "Dream_greedy_sentient",
@@ -14,7 +14,7 @@
       "n_tokens": 3379,
       "n_layers": 64,
       "file": "Dream_greedy_sentient.json",
-      "size_mb": 6.4
+      "size_mb": 6.7
     },
     {
       "stem": "Dream_conv_00173_run1",
@@ -22,7 +22,7 @@
       "n_tokens": 3054,
       "n_layers": 64,
       "file": "Dream_conv_00173_run1.json",
-      "size_mb": 5.8
+      "size_mb": 6.1
     },
     {
       "stem": "Dream_conv_00178_run1",
@@ -30,7 +30,7 @@
       "n_tokens": 3072,
       "n_layers": 64,
       "file": "Dream_conv_00178_run1.json",
-      "size_mb": 5.8
+      "size_mb": 6.1
     },
     {
       "stem": "Dream_conv_00181_run1",
@@ -38,7 +38,7 @@
       "n_tokens": 3199,
       "n_layers": 64,
       "file": "Dream_conv_00181_run1.json",
-      "size_mb": 6.1
+      "size_mb": 6.3
     },
     {
       "stem": "Dream_conv_00187_run1",
@@ -46,7 +46,7 @@
       "n_tokens": 3130,
       "n_layers": 64,
       "file": "Dream_conv_00187_run1.json",
-      "size_mb": 5.9
+      "size_mb": 6.2
     },
     {
       "stem": "Dream_conv_00191_run1",
@@ -54,7 +54,7 @@
       "n_tokens": 2797,
       "n_layers": 64,
       "file": "Dream_conv_00191_run1.json",
-      "size_mb": 5.3
+      "size_mb": 5.5
     },
     {
       "stem": "Dream_conv_00194_run1",
@@ -62,7 +62,7 @@
       "n_tokens": 3014,
       "n_layers": 64,
       "file": "Dream_conv_00194_run1.json",
-      "size_mb": 5.7
+      "size_mb": 6.0
     }
   ]
 }

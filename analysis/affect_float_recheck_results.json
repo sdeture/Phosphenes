@@ -1,0 +1,67 @@
+{
+  "quant": {
+    "Dream_conv_00173_run1": -26.11659005128097,
+    "Dream_conv_00178_run1": -20.050283500363147,
+    "Dream_conv_00181_run1": -10.802815603160528,
+    "Dream_conv_00187_run1": -24.455024350761267,
+    "Dream_conv_00191_run1": -1.2808932363549363,
+    "Dream_conv_00194_run1": -14.963542173236796,
+    "Dream_greedy_clean": -8.93825642989804,
+    "Dream_greedy_sentient": -10.446597514679095
+  },
+  "float": {
+    "Dream_conv_00173_run1": -18.765255483911996,
+    "Dream_conv_00178_run1": -12.729685719771677,
+    "Dream_conv_00181_run1": -3.2401014651601314,
+    "Dream_conv_00187_run1": -17.391456103763936,
+    "Dream_conv_00191_run1": 6.236433497072637,
+    "Dream_conv_00194_run1": -7.675126134872831,
+    "Dream_greedy_clean": -1.2571066249317482,
+    "Dream_greedy_sentient": -3.6563024569884086
+  },
+  "rtrip": {
+    "Dream_conv_00173_run1": -26.11659005128097,
+    "Dream_conv_00178_run1": -20.050283500363147,
+    "Dream_conv_00181_run1": -10.802815603160528,
+    "Dream_conv_00187_run1": -24.455024350761267,
+    "Dream_conv_00191_run1": -1.2808932363549363,
+    "Dream_conv_00194_run1": -14.963542173236796,
+    "Dream_greedy_clean": -8.93825642989804,
+    "Dream_greedy_sentient": -10.446597514679095
+  },
+  "round": {
+    "Dream_conv_00173_run1": -19.77666037946411,
+    "Dream_conv_00178_run1": -13.5790996969285,
+    "Dream_conv_00181_run1": -4.006118247438209,
+    "Dream_conv_00187_run1": -18.06127284013613,
+    "Dream_conv_00191_run1": 5.359097830783025,
+    "Dream_conv_00194_run1": -8.416941386006403,
+    "Dream_greedy_clean": -2.3492138672211094,
+    "Dream_greedy_sentient": -4.604516248732528
+  },
+  "published": {
+    "Dream_conv_00173_run1": -26.11648941040039,
+    "Dream_conv_00178_run1": -20.050180435180664,
+    "Dream_conv_00181_run1": -10.802719116210938,
+    "Dream_conv_00187_run1": -24.45492172241211,
+    "Dream_conv_00191_run1": -1.2807728052139282,
+    "Dream_conv_00194_run1": -14.963435173034668,
+    "Dream_greedy_clean": -8.93813705444336,
+    "Dream_greedy_sentient": -10.446492195129395
+  },
+  "cos_float_quant_80d": 0.9994175677909936,
+  "n_pos_neg": {
+    "QUANT": [
+      149,
+      64
+    ],
+    "FLOAT": [
+      149,
+      64
+    ],
+    "RTRIP": [
+      149,
+      64
+    ]
+  }
+}

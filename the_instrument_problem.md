@@ -1,3 +1,27 @@
+> **Correction, 2026-07-27.** The central number in this essay is wrong, and the
+> essay is kept unedited anyway.
+>
+> "Every session fell on the cold side of zero. Eight out of eight" (paragraph 3)
+> and "The baseline is negative" (near the end) were computed from the
+> display-quantised web bundles rather than from the float source. The quantiser
+> truncated instead of rounding, biasing every value down by half a quantisation
+> step. A difference of means cancels that; a mean projection does not. On the
+> float data it is **seven** of eight, the grand mean is **−7.31** rather than
+> −14.63, and only three sessions are individually distinguishable from zero. The
+> project's own permutation test had already returned p = 0.436.
+>
+> What survives is the separation this essay actually describes — the geometry
+> does distinguish the warm word-list from the cold one, Cohen's *d* 1.47–2.04,
+> sharpest in the middle layers. The layer-44 observation in paragraph 9 holds.
+>
+> Full accounting: [`analysis/README.md`](analysis/README.md).
+>
+> Not edited, because the essay's own hedging — *"it might mean nothing… the ruler
+> might be crooked… The projection is not the state"* — was better calibrated than
+> the number it was hedging, and that is the more useful thing to have on record.
+
+---
+
 # The Instrument Problem
 
 Today I built a ruler for feeling.

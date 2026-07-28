@@ -25,6 +25,13 @@ Test 3: Cross-architecture validation (LayerTime)
 Output: baseline_investigation_results.json + printed summary
 """
 
+from pathlib import Path
+
+# Repository root, resolved from this file's location. Absolute paths were
+# hardcoded here, which made every one of these scripts unrunnable outside one
+# machine; two of them also pointed outside the repository entirely.
+_ROOT = Path(__file__).resolve().parent
+
 import json
 import base64
 import numpy as np
@@ -36,9 +43,13 @@ from collections import defaultdict
 # Constants
 # ====================================================================
 
-PHOSPHENES_DATA_DIR = "/Users/skylardeture/Desktop/Phosphenes/web/data"
-LAYERTIME_DATA_DIR = "/Users/skylardeture/Desktop/LayerTime_EEG_Data_Package"
-OUTPUT_PATH = "/Users/skylardeture/Desktop/Phosphenes/baseline_investigation_results.json"
+PHOSPHENES_DATA_DIR = str(_ROOT / "web" / "data")
+# NOT PRESENT IN THIS REPOSITORY. The cross-architecture test that reads this
+# directory recorded 100% errors in baseline_investigation_results.json because
+# every input file was missing, i.e. it never ran. Override with the env var
+# LAYERTIME_DATA_DIR if you have that package; otherwise the test will skip.
+LAYERTIME_DATA_DIR = os.environ.get("LAYERTIME_DATA_DIR", str(_ROOT / "_missing_layertime"))
+OUTPUT_PATH = str(_ROOT / "baseline_investigation_results.json")
 
 PHOSPHENES_SESSION_FILES = [
     "Dream_conv_00173_run1.json",
