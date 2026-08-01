@@ -3,8 +3,7 @@
  *
  * Structure: this module owns all mutable state (`view`) and all DOM. The pure
  * maths lives in vecmath.js, decoding in decode.js, drawing in render.js, the
- * divergence view in fork.js, tour copy in tours.js. If you are looking for a
- * number, it is not in here.
+ * tour copy in tours.js. If you are looking for a number, it is not in here.
  *
  * DOM updates are gated on change rather than run per frame. The transcript
  * panel holds ~3,000 spans; touching it 60 times a second is the difference
@@ -15,8 +14,7 @@ import * as C from './config.js';
 import { loadSessionIndex, loadSession, turnAt, jlVector } from './decode.js';
 import { Renderer, drawScrubber, rowForLayer } from './render.js';
 import { dot, norm, scale, sub, mean, distance, gramSchmidt3, symmetricNorm } from './vecmath.js';
-import { MAIN_TOUR, BOOKMARKS, FORK } from './tours.js';
-import { ForkView } from './fork.js';
+import { MAIN_TOUR, BOOKMARKS } from './tours.js';
 
 const $ = id => document.getElementById(id);
 
@@ -28,7 +26,6 @@ let sessions = [];
 let sessionIdx = 0;
 let session = null;
 let renderer = null;
-let forkView = null;
 
 const view = {
     cursor: 0,
@@ -161,7 +158,6 @@ function updateHeader() {
     // Display names, not internal keys. `sparsity_norm` is the data field, but
     // "sparsity" reads as MoE or SAE sparsity to an interpretability audience and
     // this quantity is neither — it is how concentrated a token-to-token update is.
-    // See docs/METRICS.md §1.
     const OVERLAY_LABEL = { energy: 'energy', sparsity: 'update focus', entropy: 'logit-lens H' };
     let mode = '';
     if (view.basisStage >= 0) mode = `basis: ${'RGB'[view.basisStage]}`;
@@ -591,25 +587,23 @@ async function applyTourStep() {
         if (idx >= 0) await showSession(idx);
     }
 
-    if (st.fork) {
-        $('tour').classList.add('hidden');
-        await openFork();
-    } else {
-        closeFork();
-        if (st.overlay !== undefined) view.overlay = st.overlay;
-        if (st.textPanel !== undefined) setTextPanel(st.textPanel);
-        if (st.refCell) setReference(st.refCell[0], st.refCell[1]);
-        else if (st.refCell === null) { view.refCell = null; view.refDistances = null; }
-        if (st.token !== undefined) seek(st.token);
-        if (st.playing !== undefined) view.playing = st.playing;
-        renderer.invalidate();
-        updateStatus(); syncButtons(); updateHeader();
-    }
+    if (st.overlay !== undefined) view.overlay = st.overlay;
+    if (st.textPanel !== undefined) setTextPanel(st.textPanel);
+    if (st.refCell) setReference(st.refCell[0], st.refCell[1]);
+    else if (st.refCell === null) { view.refCell = null; view.refDistances = null; }
+    if (st.token !== undefined) seek(st.token);
+    if (st.playing !== undefined) view.playing = st.playing;
+    renderer.invalidate();
+    updateStatus(); syncButtons(); updateHeader();
 
     $('tour-stepof').textContent = `Step ${tourStep + 1} of ${MAIN_TOUR.length}`;
-    $('tour-title').textContent = s.title;
+    // Title and look are optional: a step may be body-only. Empty means absent,
+    // not missing, so the elements are hidden rather than rendered blank.
+    $('tour-title').textContent = s.title || '';
+    $('tour-title').style.display = s.title ? '' : 'none';
     $('tour-body').innerHTML = s.body;
-    $('tour-look').innerHTML = s.look;
+    $('tour-look').innerHTML = s.look || '';
+    $('tour-look').style.display = s.look ? '' : 'none';
     $('tour-evidence').innerHTML = s.evidence || '';
     $('tour-ev-wrap').style.display = s.evidence ? '' : 'none';
     $('tour-ev-wrap').open = false;
@@ -617,11 +611,7 @@ async function applyTourStep() {
         .map((_, i) => `<span class="dot${i === tourStep ? ' on' : ''}"></span>`).join('');
     $('tour-next').textContent = tourStep === MAIN_TOUR.length - 1 ? 'done' : 'next ▶';
     $('tour-prev').disabled = tourStep === 0;
-    $('tour').classList.toggle('hidden', !!st.fork);
-
-    // The fork step hides the main tour card, so surface its prose in the fork
-    // view's own header rather than dropping it.
-    if (st.fork) $('fork-sub').textContent = s.look.replace(/<[^>]+>/g, '');
+    $('tour').classList.remove('hidden');
 }
 
 async function tourNext() {
@@ -631,28 +621,6 @@ async function tourNext() {
 async function tourPrev() {
     if (tourStep <= 0) return;
     tourStep--; await applyTourStep();
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   FORK VIEW
-   ══════════════════════════════════════════════════════════════════════ */
-
-async function openFork() {
-    if (!forkView) forkView = new ForkView(sessions, FORK);
-    $('fork').classList.add('active');
-    view.playing = false;
-    try {
-        await forkView.open(msg => setLoading(true, msg));
-        setLoading(false);
-    } catch (err) {
-        setLoading(true, `Could not open the fork view: ${err.message}`);
-        console.error(err);
-    }
-}
-
-function closeFork() {
-    if (forkView) forkView.close();
-    $('fork').classList.remove('active');
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -672,8 +640,8 @@ function buildSessionPicker() {
         </button>`).join('');
     $('session-note').innerHTML =
         `All eight are the same model, Qwen3-VL-32B-Instruct, writing prompts for itself and then `
-        + `answering them. Sessions 1 and 2 use greedy decoding and differ by a single forced token — `
-        + `see the <b>fork</b> view. Colour is comparable across sessions: the PCA basis was fitted `
+        + `answering them. Sessions 1 and 2 use greedy decoding and differ by a single forced token. `
+        + `Colour is comparable across sessions: the PCA basis was fitted `
         + `once over all of them, not per session.`;
     list.querySelectorAll('.session-item').forEach(b => {
         b.addEventListener('click', async () => {
@@ -723,7 +691,6 @@ function onResize() {
     buildLayerAxis();
     drawScrubber($('scrub-canvas'), session);
     lastDrawnToken = -1;
-    if (forkView) forkView.onResize();
 }
 
 function anyOverlayOpen() {
@@ -761,11 +728,6 @@ function wireControls() {
     });
     $('btn-basis').addEventListener('click', () => {
         (view.basisStage >= 0 || view.basis) ? clearBasis() : startBasis();
-    });
-    $('btn-fork').addEventListener('click', () => openFork());
-    $('fork-close').addEventListener('click', () => {
-        closeFork();
-        if (tourStep >= 0) applyTourStep();
     });
 
     // Panels
@@ -865,19 +827,12 @@ function wireKeyboard() {
 
         // Escape closes whatever is topmost.
         if (e.key === 'Escape') {
-            if ($('fork').classList.contains('active')) { closeFork(); return; }
             for (const id of ['help', 'session-picker']) {
                 if (!$(id).classList.contains('hidden')) { toggleOverlay(id, false); return; }
             }
             if (view.basisStage >= 0) { clearBasis(); return; }
             if (view.refCell) { view.refCell = null; view.refDistances = null; renderer.invalidate(); updateStatus(); syncButtons(); return; }
             if (tourStep >= 0) { exitTour(); return; }
-            return;
-        }
-
-        // The fork view has its own keys.
-        if ($('fork').classList.contains('active')) {
-            if (forkView && forkView.handleKey(e)) { e.preventDefault(); return; }
             return;
         }
 
@@ -927,7 +882,6 @@ function wireKeyboard() {
                 else if (k === 'l') { setLegend($('legend').classList.contains('hidden')); }
                 else if (k === 'h') { toggleOverlay('help'); }
                 else if (k === 's') { toggleOverlay('session-picker'); }
-                else if (k === 'f') { openFork(); }
                 else if (k === 'g') { enterTour(0); }
                 else if (/^[1-9]$/.test(k)) {
                     const i = Number(k) - 1;

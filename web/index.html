@@ -83,7 +83,6 @@
             <span class="clabel">tools</span>
             <button class="cbtn" id="btn-ref"   title="Reference-point mode (P): recolour everything by similarity to one cell">ref</button>
             <button class="cbtn" id="btn-basis" title="Custom colour basis (C): define your own axes from cells you pick">basis</button>
-            <button class="cbtn" id="btn-fork"  title="The one-token fork (F): two runs, one forced token apart">fork</button>
         </div>
 
         <div class="cgroup optional">
@@ -108,8 +107,6 @@
         <dt>rows</dt><dd>transformer layers, layer 0 at the bottom</dd>
         <dt>hue</dt><dd>position in the top 3 principal components of the 16-dim sketch</dd>
         <dt>brightness</dt><dd>activation magnitude at that layer</dd>
-        <dt>shimmer</dt><dd>how far the state moved since the previous token</dd>
-        <dt>grain</dt><dd>how much its <em>direction</em> changed, not just its size</dd>
         <dt><span class="swatch" style="background:linear-gradient(90deg,#ffe0a0,#fff3d6)"></span></dt>
         <dd>a <em>seam</em> — an unusually large mid-network transition</dd>
         <dt><span class="swatch" style="background:#78b4ff"></span><span class="swatch" style="background:#ffc864"></span></dt>
@@ -149,45 +146,11 @@
 <!-- ── Cold open: the argument, before the instrument ──────────────── -->
 <div id="cold-open" class="overlay hidden">
     <div class="overlay-card">
-        <div class="eyebrow">A prototype, and the research programme behind it</div>
         <h1>PHOSPHENES</h1>
-        <div class="tagline">Press on your closed eyes and you see light your own nervous system made.</div>
 
         <p>
-            A transformer does a startling amount of work to produce one word. Not a lookup —
-            a computation, run to completion, and then discarded.
-        </p>
-
-        <div class="figure">
-            <span class="big">979,763,200 numbers</span>
-            <span class="cap">
-                is the size of the internal state Qwen3-VL-32B-Instruct moved through while
-                writing the conversation you are about to watch: 2,990 tokens × 64 layers ×
-                5,120 dimensions. About 1.96 GB, for one conversation, at the precision it
-                was computed in.
-            </span>
-        </div>
-
-        <p>
-            The usual ways to study that are to read the input and output very carefully, or
-            to run numerical analysis on slices of the residual stream. Both work. Both use a
-            narrow part of what a person has available.
-        </p>
-
-        <p>
-            You also have a visual system that finds edges, motion and regime change without
-            being asked; an ability to bind sound to sight to meaning; and a habit of
-            compressing enormous quantities of information into a single coarse feeling —
-            <em>this is orderly</em>, <em>this is chaotic</em>, <em>something just
-            changed</em>. Those faculties are not a lesser instrument. For data of this size
-            and shape they may be the better one, and they are mostly unused.
-        </p>
-
-        <p class="muted">
-            Phosphenes is one attempt at pointing them at a language model. It is a prototype
-            arguing for a programme, not a finished result. What it can already do is show you
-            an entire conversation — every layer of every token — in a form you apprehend
-            rather than read.
+            This website is a prototype of Phosphenes, a mechanistic interpretability
+            visualization tool for observational science and hypothesis development.
         </p>
 
         <div class="actions">
@@ -241,7 +204,6 @@
             <div class="row"><kbd>Tab</kbd> transcript on / off</div>
             <div class="row"><kbd>T</kbd> turn markers on / off</div>
             <div class="row"><kbd>L</kbd> legend on / off</div>
-            <div class="row"><kbd>F</kbd> the one-token fork</div>
             <div class="row"><kbd>G</kbd> guided tour</div>
             <div class="row"><kbd>H</kbd> this list</div>
 
@@ -250,65 +212,6 @@
                 inspector and hover any cell. Nothing here is visible only through the picture.
             </div>
         </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     FORK VIEW — two runs of the same model, one forced token apart
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="fork">
-    <div id="fork-header">
-        <span class="title">THE ONE-TOKEN FORK</span>
-        <span class="sub" id="fork-sub"></span>
-        <div style="margin-left:auto; display:flex; gap:6px;">
-            <button class="hbtn accent" id="fork-close">← back to the viewer</button>
-        </div>
-    </div>
-
-    <div id="fork-explain">
-        <div class="prefix">
-            Same model, same prompt, greedy decoding — so both runs are deterministic and
-            neither has any sampling noise. The model was choosing a prompt for itself, and
-            wrote:
-            <div style="margin:9px 0 0">
-                “<span class="shared" id="fork-prefix"></span><span class="tokL" id="fork-tokL"></span>…”<br><span style="color:var(--dimmer)">or, with one token forced:</span> “<span class="shared">…story about a</span><span class="tokR" id="fork-tokR"></span>…”
-            </div>
-            <div style="margin-top:9px; font-size:11.5px" id="fork-conts"></div>
-        </div>
-        <div class="stat"><span class="n" id="fork-stat-shared"></span><span class="l">identical tokens</span></div>
-        <div class="stat"><span class="n" id="fork-stat-jump"></span><span class="l">state distance at the fork</span></div>
-        <div class="stat"><span class="n" id="fork-stat-scale"></span><span class="l">typical state magnitude</span></div>
-    </div>
-
-    <div id="fork-panes">
-        <div class="fork-pane left">
-            <span class="tag" id="fork-tag-l"></span>
-            <div class="fork-axis" id="fork-axis-l"></div>
-            <div class="fork-canvas-wrap"><canvas id="fork-canvas-l"></canvas></div>
-        </div>
-        <div class="fork-pane right">
-            <span class="tag" id="fork-tag-r"></span>
-            <div class="fork-axis" id="fork-axis-r"></div>
-            <div class="fork-canvas-wrap"><canvas id="fork-canvas-r"></canvas></div>
-        </div>
-        <div id="fork-trace">
-            <span class="lbl">divergence between the two runs, by layer — black is identical</span>
-            <canvas id="fork-trace-canvas"></canvas>
-        </div>
-    </div>
-
-    <div id="fork-controls">
-        <div class="cgroup">
-            <button class="cbtn" id="fork-play" title="Play / pause">▶</button>
-            <button class="cbtn" id="fork-back" title="Back one token">◀|</button>
-            <button class="cbtn" id="fork-fwd" title="Forward one token">|▶</button>
-            <button class="cbtn" id="fork-goto" title="Jump to the fork">⇥ fork</button>
-        </div>
-        <div id="fork-scrubber">
-            <canvas id="fork-scrub-canvas"></canvas>
-            <div id="fork-scrub-head"></div>
-        </div>
-        <span id="fork-position"></span>
     </div>
 </div>
 

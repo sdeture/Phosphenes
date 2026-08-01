@@ -7,7 +7,7 @@
  *
  * Vectors are points in the 16-dimensional Johnson-Lindenstrauss sketch space,
  * not in the model's native 5,120-dimensional residual stream. The distinction
- * matters for interpretation and is discussed in docs/METRICS.md: JL projection
+ * matters for interpretation: JL projection
  * approximately preserves pairwise Euclidean distances, so *distances* and
  * *distance-derived* quantities are meaningful; individual coordinates are not.
  */

@@ -129,8 +129,8 @@ def to_uint8(arr):
     of half a quantisation step. For a display that is invisible. For anything
     that then averages the dequantised values it is a systematic offset in a
     fixed direction, and it burned us — an analysis that reported a negative
-    mean projection turned out to be reporting the quantiser (see
-    analysis/README.md). Rounding drops the bias from -0.499 LSB to -0.002 LSB.
+    mean projection turned out to be reporting the quantiser.
+    Rounding drops the bias from -0.499 LSB to -0.002 LSB.
     """
     return np.rint(np.clip(arr, 0, 1) * 255).astype(np.uint8)
 

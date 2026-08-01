@@ -11,14 +11,10 @@
  *
  * ── How it stays fast ─────────────────────────────────────────────────
  *
- * Two tiers:
- *
- *   Tier 1, cached. Everything that depends only on (window position, colour
- *   mode, tool state): PCA or custom-basis colour, energy brightness, seam glow,
- *   overlay tints. Recomputed when the cache key changes, which while playing is
- *   once per token rather than once per frame.
- *
- *   Tier 2, per frame. Turbulence and grain, which are animated by construction.
+ * Everything is cached on (window position, colour mode, tool state): PCA or
+ * custom-basis colour, energy brightness, seam glow, overlay tints. Recomputed
+ * when the cache key changes, which while playing is once per token rather than
+ * once per frame.
  *
  * All of it happens at cell resolution — a grid of (visibleTokens x layers),
  * typically about 200x64 = 12,800 cells — and is then scaled up to the canvas by
@@ -28,7 +24,6 @@
  */
 
 import * as C from './config.js';
-import { generateNoiseFields, sampleRing } from './noise.js';
 import { quantile } from './vecmath.js';
 
 /** Screen row for a layer index. Layer 0 at the bottom. */
@@ -46,17 +41,11 @@ export class Renderer {
         this.offCtx = this.off.getContext('2d', { alpha: false });
         this.offImage = null;
 
-        this.noise = null;
-        this.noiseShape = '';
-
         this.cacheKey = '';
         this.cachedRGB = null;
 
         /** CSS-pixel geometry of the last frame, for hit-testing. */
         this.geom = { w: 0, h: 0, cellW: 0, cellH: 0, tStart: 0, tEnd: 0, padLeft: 0, tokensVisible: 0 };
-
-        this.turbulencePhase = 0;
-        this.grainPhase = 0;
     }
 
     /**
@@ -80,11 +69,6 @@ export class Renderer {
 
         const tokensVisible = C.computeTokensVisible(rect.width);
 
-        const shape = `${layers}x${tokensVisible}`;
-        if (shape !== this.noiseShape) {
-            this.noise = generateNoiseFields(layers, tokensVisible, C.TURBULENCE_FIELDS, C.GRAIN_FIELDS);
-            this.noiseShape = shape;
-        }
         if (this.off.width !== tokensVisible || this.off.height !== layers) {
             this.off.width = tokensVisible;
             this.off.height = layers;
@@ -108,14 +92,11 @@ export class Renderer {
         const { L } = s;
         const W = v.tokensVisible;
 
-        this.turbulencePhase += C.TURBULENCE_SPEED * dt;
-        this.grainPhase += C.GRAIN_SPEED * dt;
-
         const tEnd = Math.min(Math.floor(v.cursor), s.T - 1);
         const tStart = Math.max(0, tEnd - W + 1);
         const padLeft = W - (tEnd - tStart + 1);
 
-        // ── Tier 1: cached base colour ──────────────────────────────────
+        // ── Cached base colour ──────────────────────────────────────────
         const key = [
             tEnd, W, L, v.overlay, v.refCell ? v.refCell.join(',') : '-',
             v.basis ? v.basis.stamp : '-', v.basisGuide ? v.basisGuide.stamp : '-',
@@ -129,10 +110,6 @@ export class Renderer {
             this.cachedRGB = rgb.slice();
             this.cacheKey = key;
         }
-
-        // ── Tier 2: animated carriers ───────────────────────────────────
-        this._turbulence(s, rgb, tStart, padLeft, W, L);
-        this._grain(s, rgb, tStart, padLeft, W, L);
 
         // ── Cell buffer -> pixels ───────────────────────────────────────
         if (!this.offImage) this.offImage = this.offCtx.createImageData(W, L);
@@ -337,46 +314,6 @@ export class Renderer {
                 const i = (row * W + col) * 3;
                 const n = Math.max(0, Math.min(1, (g[t * L + layer] - lo) * inv));
                 rgb[i] = n; rgb[i + 1] = n; rgb[i + 2] = n;
-            }
-        }
-    }
-
-    /* ────────────────────────────────────────────────────────────────
-       TIER 2 — animated carriers
-       ──────────────────────────────────────────────────────────────── */
-
-    _turbulence(s, rgb, tStart, padLeft, W, L) {
-        if (C.TURBULENCE_AMP <= 0 || !this.noise) return;
-        const f = this.noise.turbulence, ph = this.turbulencePhase;
-        for (let row = 0; row < L; row++) {
-            const layer = layerForRow(row, L);
-            for (let col = 0; col < W; col++) {
-                const t = tStart + (col - padLeft);
-                if (t < 0 || t >= s.T) continue;
-                const amp = s.deltaNorm[t * L + layer] / 255;
-                if (amp <= 0) continue;
-                const k = row * W + col;
-                const m = 1 + sampleRing(f, ph, k) * amp * C.TURBULENCE_AMP;
-                const i = k * 3;
-                rgb[i] *= m; rgb[i + 1] *= m; rgb[i + 2] *= m;
-            }
-        }
-    }
-
-    _grain(s, rgb, tStart, padLeft, W, L) {
-        if (C.GRAIN_MAX <= 0 || !this.noise) return;
-        const f = this.noise.grain, ph = this.grainPhase;
-        for (let row = 0; row < L; row++) {
-            const layer = layerForRow(row, L);
-            for (let col = 0; col < W; col++) {
-                const t = tStart + (col - padLeft);
-                if (t < 0 || t >= s.T) continue;
-                const amp = s.cosInstability[t * L + layer] / 255;
-                if (amp <= 0) continue;
-                const k = row * W + col;
-                const m = 1 + sampleRing(f, ph, k) * C.GRAIN_MAX * amp;
-                const i = k * 3;
-                rgb[i] *= m; rgb[i + 1] *= m; rgb[i + 2] *= m;
             }
         }
     }

@@ -40,7 +40,7 @@ Consequences, and they are not uniform:
     top column agrees with the truth on only 53–60% of positions and reports a
     mean rank of ~459 against a true ~12.5, with a maximum of 149,851 against
     11,706. Nothing displays this array today, which is precisely why it is
-    dangerous: `docs/METRICS.md` §6 calls it the cheapest next overlay to ship.
+    dangerous: it is the cheapest next overlay to ship.
     Use `logit_lens_rank()` below.
 
   * Every *other* layer-63 column (`jl`, `jl_energy`, `h_norm`, `delta_l2`,

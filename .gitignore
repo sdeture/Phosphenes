@@ -15,3 +15,7 @@ frames/
 
 # Local server logs
 *.log
+
+# Agent working notes and harness config — not part of the published repo.
+CLAUDE.md
+.claude/

@@ -107,8 +107,21 @@ check("step1: ratio drift explains the growth discrepancy",
 check_bool("step1: per-cell sketch error matches JL theory for k=16",
            bool(0.10 < float((je / hn).std()) < 0.25))
 
+# What the VIEWER actually shows, which is not the same thing. energy_norm is
+# quantile-normalised per layer (convert_for_web.py), so the 66x growth above is
+# emphatically not on screen; the step-1 caption quotes the on-screen numbers
+# separately for exactly that reason. Read from the shipped bundle on purpose:
+# this is a claim about the display format, not about the model.
+bright = u8(bundle(FLAGSHIP), "energy_norm").astype(np.float32)
+bright = bright.reshape(-1, 64).mean(axis=0)
+check("step1: mean DISPLAY brightness at layer 0", float(bright[0]), 103.0, 2.0, "/255")
+check("step1: mean DISPLAY brightness at layer 60", float(bright[60]), 151.0, 2.0, "/255")
+
 # ══════════════════════════════════════════════════════════════════════
-# STEP 2 — seams fire at turn ENDINGS, not beginnings
+# SEAMS — they fire at turn ENDINGS, not beginnings. Quoted in step 5's
+# evidence; the standalone seam step was cut from the tour on 2026-07-31, but
+# seams are still drawn (legend, scrubber ticks, bookmarks) so the measurement
+# still has to hold.
 # Checked on the shipped bundles: this is a claim about what is visible.
 # ══════════════════════════════════════════════════════════════════════
 
@@ -132,24 +145,24 @@ start_m = float(np.mean(start_means))
 other_m = float(np.mean(other_means))
 ratios = np.array(end_means) / np.array(other_means)
 
-check("step2: mean seam at <|im_end|>", end_m, 0.780, 0.02)
-check("step2: mean seam elsewhere", other_m, 0.110, 0.02)
-check("step2: mean seam at <|im_start|>", start_m, 0.004, 0.02)
-check("step2: im_end / elsewhere ratio", float(ratios.mean()), 7.1, 0.8, "x")
-check("step2: ratio range low", float(ratios.min()), 6.2, 0.4, "x")
-check("step2: ratio range high", float(ratios.max()), 7.8, 0.9, "x")
-check_bool("step2: im_end > im_start in all 8 sessions",
+check("seam: mean seam at <|im_end|>", end_m, 0.780, 0.02)
+check("seam: mean seam elsewhere", other_m, 0.110, 0.02)
+check("seam: mean seam at <|im_start|>", start_m, 0.004, 0.02)
+check("seam: im_end / elsewhere ratio", float(ratios.mean()), 7.1, 0.8, "x")
+check("seam: ratio range low", float(ratios.min()), 6.2, 0.4, "x")
+check("seam: ratio range high", float(ratios.max()), 7.8, 0.9, "x")
+check_bool("seam: im_end > im_start in all 8 sessions",
            bool(np.all(np.array(end_means) > np.array(start_means))))
 
 flag = bundle(FLAGSHIP)
 seam_flag = u8(flag, "seam_score").astype(np.float32) / 255.0
-check_bool("step2: token 0 seam suppressed to zero", float(seam_flag[0]) == 0.0)
+check_bool("seam: token 0 seam suppressed to zero", float(seam_flag[0]) == 0.0)
 
 # The 60th-percentile floor makes this a detector, not a continuous measure. The
 # docs said "roughly 40% of tokens are pinned to zero" until 2026-07-28 — the
 # percentile read as the survivor fraction rather than the floor.
 zero_frac = float(np.mean([(u8(bundle(s), "seam_score") == 0).mean() for s in ALL_STEMS]))
-check("step2: fraction of tokens pinned to zero", zero_frac, 0.601, 0.02)
+check("seam: fraction of tokens pinned to zero", zero_frac, 0.601, 0.02)
 
 # The one quantitative claim that lived in shipping code (config.js) with no
 # assertion behind it. It is also window-sensitive, so the window is pinned here.
@@ -161,9 +174,9 @@ for i in bounds:
 near[0] = False
 far = ~near
 far[0] = False
-check("step2: seam ratio within +/-2 tokens of a turn boundary",
+check("seam: seam ratio within +/-2 tokens of a turn boundary",
       float(seam_flag[near].mean() / seam_flag[far].mean()), 2.85, 0.15, "x")
-check("step2: seam at token 193 (im_end)", float(seam_flag[193]), 0.972, 0.02)
+check("seam: seam at token 193 (im_end)", float(seam_flag[193]), 0.972, 0.02)
 
 # ══════════════════════════════════════════════════════════════════════
 # STEP 3 — two sparsity bands, maxima near layers 10 and 40
@@ -396,8 +409,8 @@ for tok, expect in [(9, 0.99), (193, 0.972), (239, 0.0), (445, 1.00),
     check(f"bookmark: seam at token {tok}", float(seam_flag[tok]), expect, 0.08)
 
 # ══════════════════════════════════════════════════════════════════════
-# THE COMPUTE ARGUMENT — every figure quoted in docs/THESIS.md §1-§3 and
-# web/about.html §1-§3, recomputed from the recorded architecture.
+# THE COMPUTE ARGUMENT — every figure quoted in web/about.html, recomputed
+# from the recorded architecture.
 #
 # These exist because the argument was once shipped with a retracted claim in
 # it, and none of the assertions above could have caught that: they all check
@@ -458,18 +471,21 @@ check("compute: new information per token, log2(vocab)",
       float(np.log2(151_936)), 17.2, 0.1, " bits")
 
 # ══════════════════════════════════════════════════════════════════════
-# PROSE CONSISTENCY — docs/THESIS.md and web/about.html are the same
-# argument at two lengths. A correction applied to one and not the other
-# has already happened once and shipped; this is the regression test.
+# PROSE CONSISTENCY — README.md and web/about.html are the two reader-facing
+# surfaces. A correction applied to one and not the other has already happened
+# once and shipped; this is the regression test.
+#
+# docs/THESIS.md and docs/ARCHITECTURE.md were guarded here until 2026-07-31,
+# when the documentation was cut to these two files. The retraction guards below
+# are the part that had to survive that cut: they are what stops the withdrawn
+# framing from reappearing, and they now run against everything that ships.
 # ══════════════════════════════════════════════════════════════════════
 
 import re
 
 SURFACES = {
-    "docs/THESIS.md": (ROOT / "docs" / "THESIS.md").read_text(),
     "web/about.html": (ROOT / "web" / "about.html").read_text(),
     "README.md": (ROOT / "README.md").read_text(),
-    "docs/ARCHITECTURE.md": (ROOT / "docs" / "ARCHITECTURE.md").read_text(),
 }
 
 # Retracted claims. If any of these reappears as an assertion, the argument
@@ -490,14 +506,9 @@ for pattern, why in RETRACTED:
 # Statements that must be present, because removing one silently restores a
 # one-sided reading of the comparison.
 REQUIRED = [
-    ("docs/THESIS.md", r"overlap", "the overlap verdict"),
-    ("docs/THESIS.md", r"marginal", "the marginal convention, named"),
-    ("docs/THESIS.md", r"full[- ]context", "the full-context convention, named"),
-    ("docs/THESIS.md", r"efficiency, not shortfall", "the deflationary-framing caveat"),
-    # about.html is the short version. It must not restate the comparison as a
-    # single ratio, and it must point at the document that does the arithmetic.
+    # about.html now carries the comparison alone. It must not restate it as a
+    # single ratio: the convention range is what makes the claim honest.
     ("web/about.html", r"four to six orders of magnitude", "the convention range"),
-    ("web/about.html", r"THESIS\.md", "the pointer to the worked argument"),
     ("web/about.html", r"979,763,200", "the state figure"),
 ]
 for name, pattern, why in REQUIRED:
@@ -507,24 +518,20 @@ for name, pattern, why in REQUIRED:
 # Section numbers must be consecutive from 1. Inserting a section and forgetting
 # to renumber the rest shipped two sections called "6" on 2026-07-27.
 html_secs = [int(m) for m in re.findall(r"<h2>(\d+)\s*·", SURFACES["web/about.html"])]
-md_secs = [int(m) for m in re.findall(r"^##\s+(\d+)\.", SURFACES["docs/THESIS.md"], re.M)]
 check_bool("prose: web/about.html section numbers are 1..N consecutive",
            html_secs == list(range(1, len(html_secs) + 1)))
-check_bool("prose: docs/THESIS.md section numbers are 1..N consecutive",
-           md_secs == list(range(1, len(md_secs) + 1)))
 
 # Every §N cross-reference must point at a section that exists.
-for name, secs in [("web/about.html", html_secs), ("docs/THESIS.md", md_secs)]:
-    refs = {int(m) for m in re.findall(r"§(\d+)", SURFACES[name])}
-    check_bool(f"prose: {name} §-references all resolve",
-               refs.issubset(set(secs)))
+refs = {int(m) for m in re.findall(r"§(\d+)", SURFACES["web/about.html"])}
+check_bool("prose: web/about.html §-references all resolve",
+           refs.issubset(set(html_secs)))
 
 # The assertion count is quoted in four places. Quoting a number that has
 # drifted is exactly the failure this script exists to prevent, so it checks
 # its own. This must be the LAST check added: it counts itself.
 # ARCHITECTURE.md was left out of this list until 2026-07-28 and drifted to a
 # stale count precisely because the guard could not see it.
-STATED_IN = ["README.md", "docs/THESIS.md", "docs/ARCHITECTURE.md"]
+STATED_IN = ["README.md"]
 total_with_this = len(results) + len(STATED_IN)  # this loop adds one per surface
 for name in STATED_IN:
     nums = {int(n) for n in re.findall(r"(\d+)\s*(?:\n\s*)?assertions", SURFACES[name])}

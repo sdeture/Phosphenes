@@ -88,34 +88,6 @@ export const SEAM_GLOW_COLOR = [1.0, 0.88, 0.65];
 /** Vertical spread of the glow, as a fraction of display height (Gaussian sigma). */
 export const SEAM_GLOW_SIGMA = 0.28;
 
-/**
- * Colour turbulence amplitude, driven per-cell by delta_norm (how much the
- * hidden state moved since the previous token).
- *
- * This is the one effect that is animation rather than data: the *amount* of
- * shimmer is the measurement, the shimmer itself is a carrier. Human vision
- * detects coherent motion far below the contrast threshold for static
- * patterns, so motion is a cheap extra channel that does not compete with
- * colour for the same perceptual bandwidth.
- */
-export const TURBULENCE_AMP = 0.16;
-/** Rate at which the turbulence noise field is cross-faded, in fields/second. */
-export const TURBULENCE_SPEED = 2.5;
-/** Number of pre-generated smoothed noise fields cycled for turbulence. */
-export const TURBULENCE_FIELDS = 4;
-
-/**
- * Grain amplitude, driven per-cell by cos_instability (1 - cosine similarity
- * to the previous token's state at the same layer).
- *
- * Reads as "static" or "noise" — which is the intended semantics. A cell where
- * the model's representational *direction* is changing, not just its
- * magnitude, looks unstable.
- */
-export const GRAIN_MAX = 0.12;
-export const GRAIN_SPEED = 3.0;
-export const GRAIN_FIELDS = 8;
-
 /** Saturation boost applied to PCA colours during data preparation, mirrored
  *  here for the custom-basis path so both look consistent. */
 export const SATURATION_BOOST = 1.3;

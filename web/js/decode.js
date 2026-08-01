@@ -22,7 +22,6 @@
  *      extraction time. JL gives a distortion bound on pairwise distances that
  *      depends on the number of points and the target dimension, not on the
  *      source dimension. Distances survive; individual coordinates do not.
- *      (See docs/METRICS.md for what this does and does not license.)
  *
  *   2. Per-dimension uint8 quantisation of the JL vectors, and uint8
  *      quantisation of the [0,1]-normalised scalar metrics, applied here.
