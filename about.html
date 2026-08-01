@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why point a nervous system at a language model — Phosphenes</title>
+<meta name="description" content="The argument behind Phosphenes: per-word computation in language models, what it is comparable to, and why interpretability needs perceptual instruments.">
+<style>
+:root {
+    --bg: #0b0b12; --text: #e6e6f0; --dim: #9a9aae; --dimmer: #6a6a7e;
+    --amber: #ffc864; --rule: rgba(255,200,100,0.16);
+    --mono: 'Menlo','SF Mono','Consolas','Monaco',ui-monospace,monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--mono); font-size: 14px; line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 5vw 14vh;
+}
+.wrap { max-width: 720px; margin: 0 auto; }
+
+nav {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 0 40px; font-size: 11px;
+}
+nav a { color: var(--amber); text-decoration: none; border-bottom: 1px solid var(--rule); }
+nav a:hover { border-bottom-color: var(--amber); }
+nav .sp { flex: 1; }
+
+h1 { font-size: 25px; font-weight: 400; color: var(--amber); line-height: 1.3; letter-spacing: 0.3px; margin-bottom: 12px; }
+.standfirst { color: var(--dim); font-size: 14px; margin-bottom: 40px; }
+
+h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.8px;
+    color: var(--amber); margin: 46px 0 16px; font-weight: 600;
+}
+h3 { font-size: 14px; color: var(--text); margin: 26px 0 8px; font-weight: 600; }
+p { margin-bottom: 16px; }
+em { color: var(--dim); }
+b, strong { color: #fff; font-weight: 600; }
+a { color: var(--amber); }
+
+.lede {
+    border-left: 2px solid var(--amber); padding: 14px 18px;
+    background: rgba(255,200,100,0.05); margin: 0 0 34px;
+    font-size: 13.5px; line-height: 1.7;
+}
+
+table { width: 100%; border-collapse: collapse; margin: 18px 0 22px; font-size: 12.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+th { color: var(--dimmer); font-weight: 400; font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; }
+td.n { text-align: right; color: var(--amber); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.side { color: var(--dimmer); font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; width: 1%; white-space: nowrap; }
+tr.match td { background: rgba(255,200,100,0.07); }
+tr.match td.side { color: var(--amber); }
+tr.match td:first-child { box-shadow: inset 2px 0 0 var(--amber); }
+.matchnote { font-size: 11px; color: var(--dimmer); margin: -14px 0 22px; }
+
+pre {
+    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 5px; padding: 14px 16px; margin: 18px 0;
+    font-size: 11.5px; line-height: 1.6; color: var(--dim);
+    overflow-x: auto;
+}
+code { color: var(--amber); font-size: 12.5px; }
+pre code { color: inherit; font-size: inherit; }
+
+.scale { margin: 26px 0; }
+.scale pre { color: var(--text); font-size: 11px; line-height: 1.55; }
+
+.callout {
+    border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px; margin: 26px 0; background: rgba(255,200,100,0.04);
+}
+.callout .big {
+    display: block; font-size: 21px; color: var(--amber);
+    font-variant-numeric: tabular-nums; margin-bottom: 6px;
+}
+.callout .cap { font-size: 12.5px; color: var(--dim); line-height: 1.65; }
+
+.warn {
+    border-left: 2px solid #ff9ec4; padding: 13px 17px; margin: 26px 0;
+    background: rgba(255,158,196,0.06); font-size: 13px; line-height: 1.7;
+}
+.warn b { color: #ffc0d8; }
+
+.obj { margin: 20px 0; }
+.obj > .q { color: var(--text); font-weight: 600; }
+.obj > .a { color: var(--dim); font-size: 13.5px; }
+
+ul { margin: 0 0 18px 20px; }
+li { margin-bottom: 7px; color: var(--dim); font-size: 13.5px; }
+li b { color: var(--text); }
+
+footer {
+    margin-top: 56px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11.5px; color: var(--dimmer); line-height: 1.7;
+}
+@media (max-width: 640px) {
+    body { font-size: 13.5px; padding: 0 5vw 12vh; }
+    h1 { font-size: 21px; }
+    .scale pre { font-size: 8.5px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+    <a href="index.html">← the instrument</a>
+    <span class="sp"></span>
+    <span style="color:var(--dimmer)">Phosphenes</span>
+</nav>
+
+<h1>Why point a nervous system at a language model</h1>
+<p class="standfirst">
+    The idea behind Phosphenes, briefly.
+</p>
+
+<div class="lede">
+    A language model does an amount of computation per word that is, in
+    order-of-magnitude terms, in the same territory as a nervous system. If we want
+    to understand what it is doing, the parts of us that do numerical analysis and
+    close reading are not the only instruments available — and probably not the
+    best ones for data of this size and shape.
+</div>
+
+<h2>1 · The problem is scale, not difficulty</h2>
+
+<p>
+    A transformer does not look a word up. It runs a computation to completion and
+    then throws it away. For one conversation in this dataset:
+</p>
+
+<div class="callout">
+    <span class="big">979,763,200 numbers</span>
+    <span class="cap">
+        2,990 tokens × 64 layers × 5,120 dimensions — about 1.96 GB of internal
+        state, for one conversation, at the precision it was computed in. That is
+        the object this instrument displays.
+    </span>
+</div>
+
+<p>
+    The two standard ways to study that are to read the input and output very
+    carefully, and to run numerical analysis on slices of the residual stream. Both
+    work. Both use a narrow part of what a person has available, and neither scales
+    to <em>"what is the shape of this whole episode?"</em>
+</p>
+
+<p>
+    Nobody reads a billion numbers. That is not a statement about effort.
+</p>
+
+<h2>2 · You have more instruments than you are using</h2>
+
+<p>
+    A person has a visual system that finds edges, motion and regime change without
+    being asked to. An ability to bind sound to sight to meaning into a single
+    percept. And a habit of compressing enormous quantities of information into one
+    coarse experiential summary — <em>this is orderly</em>, <em>this is
+    chaotic</em>, <em>this is beautiful</em>, <em>something just changed</em>,
+    <em>that was discordant</em>.
+</p>
+
+<p>
+    Those faculties are not a lesser instrument to be used when rigour is
+    unavailable. They are high-bandwidth, heavily trained, and largely idle during
+    interpretability work. The motivating question behind this tool is simply:
+    <b>how much of the human nervous system can we bring to bear on attuning to and
+    interpreting a language model?</b>
+</p>
+
+<h2>3 · This has worked before</h2>
+
+<p>
+    Neuroscience has been on the far side of the readability line since it started,
+    and its response was not to read faster. It was to build instruments that hand
+    the data to the visual system: EEG traces, spike rasters, fMRI heat maps,
+    spectrograms. Those are not simplifications for the public. They are how
+    professionals work, because a trained eye extracts structure from a raster that
+    nobody extracts from the underlying table.
+</p>
+
+<p>
+    Interpretability is in the same position and has mostly not built that layer. It
+    has excellent tools for asking narrow questions with high precision — activation
+    patching, sparse autoencoders, circuit analysis — and comparatively little for
+    orienting inside a whole episode and deciding where to point them.
+</p>
+
+<h2>4 · What Phosphenes is</h2>
+
+<p>
+    A prototype of that programme, not a finished result. It renders every layer of
+    every token of a conversation as something you apprehend rather than read, with
+    four ways to colour it, a way to ask "where else does it do this?", and a way to
+    define your own contrast axes with a mouse.
+</p>
+
+<p>
+    Things it turns out you can see: a turn <em>ending</em> is violent while a turn
+    <em>beginning</em> is nothing; depth has two horizontal bands of concentrated
+    update; and the model opens the question before it closes it.
+</p>
+
+<div class="warn">
+    <b>An instrument is judged by whether you can check what it shows you.</b> The
+    guided tour states a measurement for every pattern it points at;
+    <code>analysis/verify_tour_claims.py</code> recomputes those from source and
+    exits non-zero if any has drifted. A visualisation that cannot be checked is
+    decoration, and the difference is testability, not taste.
+</div>
+
+<h2>5 · The size of the comparison</h2>
+
+<p>
+    Per-word computation depends on an accounting convention worth
+    four to six orders of magnitude, and the human side is wider still,
+    so the honest answer is a range on both sides rather than a single ratio.
+</p>
+
+<div class="lede">
+    <b>The claim, in the form it can bear.</b> Per-word computation in current
+    language models is far past the point of being readable, and within a few orders
+    of magnitude of biological scale. In every other domain where that has been
+    true, progress required instruments that engage the whole sensory apparatus —
+    vision first, then binding across modalities, then trained intuition.
+    Interpretability has barely started on that, and the fact that it is unbuilt is
+    a larger opportunity than any individual technique.
+</div>
+
+<footer>
+    <a href="index.html">← back to the instrument</a> ·
+    <a href="index.html">take the guided tour</a> — seven steps, each one a specific
+    thing to look at with the measurement behind it one click away
+    <br><br>
+    DeTure &amp; DeTure, 2026 · MIT licensed
+</footer>
+
+</div>
+</body>
+</html>

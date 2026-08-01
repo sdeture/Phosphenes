@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phosphenes — watching a language model think</title>
+<meta name="description" content="An interactive instrument for watching the internal states of a language model across an entire conversation: every layer, every token.">
+<link rel="stylesheet" href="css/phosphenes.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     APP SHELL
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="app">
+
+    <div id="header">
+        <div id="header-left">
+            <h1>PHOSPHENES</h1>
+            <span id="session-name"></span>
+        </div>
+        <div id="header-right">
+            <span id="mode-display"></span>
+            <span id="position-display"></span>
+            <button class="hbtn accent" id="btn-tour" title="Guided tour">tour</button>
+            <button class="hbtn" id="btn-legend" title="Toggle legend (L)">legend</button>
+            <button class="hbtn" id="btn-help" title="Keyboard reference (H)">?</button>
+            <a class="hbtn" href="about.html" title="The argument behind this tool">about</a>
+        </div>
+    </div>
+
+    <div id="small-screen-note">
+        Phosphenes is built for a wide screen, a pointer and a keyboard. On this display the
+        transcript and legend are hidden and some controls are collapsed. It still plays.
+    </div>
+
+    <!-- Who is speaking, aligned to the visible token window -->
+    <div id="role-bar"></div>
+
+    <div id="main-area">
+        <div id="plot-area">
+            <div id="layer-axis"></div>
+            <div id="canvas-wrapper">
+                <canvas id="viz"></canvas>
+            </div>
+            <div id="axis-corner"></div>
+            <div id="token-ruler"></div>
+        </div>
+        <div id="text-panel"></div>
+    </div>
+
+    <div id="token-strip" class="hidden"></div>
+
+    <!-- ── Control bar ─────────────────────────────────────────────── -->
+    <div id="controls">
+        <div class="cgroup">
+            <button class="cbtn" id="btn-play" title="Play / pause (Space)">▶</button>
+            <button class="cbtn" id="btn-back" title="Back one token (←)">◀|</button>
+            <button class="cbtn" id="btn-fwd" title="Forward one token (→)">|▶</button>
+        </div>
+
+        <div class="cgroup">
+            <button class="cbtn" id="btn-slower" title="Slower (↓)">−</button>
+            <span id="speed-display">1.0×</span>
+            <button class="cbtn" id="btn-faster" title="Faster (↑)">+</button>
+        </div>
+
+        <div id="scrubber" title="Click or drag to seek. Bands are turns; ticks are seams.">
+            <canvas id="scrub-canvas"></canvas>
+            <div id="scrub-head"></div>
+        </div>
+        <div id="scrub-tip"></div>
+
+        <div class="cgroup">
+            <span class="clabel">colour</span>
+            <button class="cbtn wide on" id="btn-mode-pca"      title="Principal components of the residual stream">pca</button>
+            <button class="cbtn wide"    id="btn-mode-energy"   title="Activation magnitude, normalised per layer">energy</button>
+            <button class="cbtn wide"    id="btn-mode-sparsity" title="How concentrated each token-to-token update is">focus</button>
+            <button class="cbtn wide"    id="btn-mode-entropy"  title="Logit-lens uncertainty at each layer">entropy</button>
+        </div>
+
+        <div class="cgroup optional">
+            <span class="clabel">tools</span>
+            <button class="cbtn" id="btn-ref"   title="Reference-point mode (P): recolour everything by similarity to one cell">ref</button>
+            <button class="cbtn" id="btn-basis" title="Custom colour basis (C): define your own axes from cells you pick">basis</button>
+        </div>
+
+        <div class="cgroup optional">
+            <button class="cbtn" id="btn-sessions" title="Choose session (S)">sessions</button>
+            <button class="cbtn on" id="btn-text" title="Toggle transcript (Tab)">text</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     FLOATING ELEMENTS
+     ══════════════════════════════════════════════════════════════════════ -->
+
+<div id="inspector"></div>
+<div id="status-bar"></div>
+
+<div id="legend">
+    <button class="close" id="legend-close" title="Hide legend">×</button>
+    <h3>Reading the display</h3>
+    <dl>
+        <dt>columns</dt><dd>one per token, oldest at left</dd>
+        <dt>rows</dt><dd>transformer layers, layer 0 at the bottom</dd>
+        <dt>hue</dt><dd>position in the top 3 principal components of the 16-dim sketch</dd>
+        <dt>brightness</dt><dd>activation magnitude at that layer</dd>
+        <dt><span class="swatch" style="background:linear-gradient(90deg,#ffe0a0,#fff3d6)"></span></dt>
+        <dd>a <em>seam</em> — an unusually large mid-network transition</dd>
+        <dt><span class="swatch" style="background:#78b4ff"></span><span class="swatch" style="background:#ffc864"></span></dt>
+        <dd>human turn / model turn, on the bar above the plot</dd>
+    </dl>
+</div>
+
+<!-- ── Guided tour ─────────────────────────────────────────────────── -->
+<div id="tour" class="hidden">
+    <div class="step-of" id="tour-stepof"></div>
+    <h3 id="tour-title"></h3>
+    <div class="body" id="tour-body"></div>
+    <div class="look" id="tour-look"></div>
+    <details id="tour-ev-wrap">
+        <summary>How this was measured</summary>
+        <div class="evidence" id="tour-evidence"></div>
+    </details>
+    <div class="nav">
+        <button class="cbtn" id="tour-prev" title="Previous step">◀</button>
+        <button class="cbtn" id="tour-next" title="Next step">next ▶</button>
+        <div class="spacer"></div>
+        <div class="dots" id="tour-dots"></div>
+        <button class="cbtn" id="tour-exit" title="Leave the tour and explore freely">exit</button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     OVERLAYS
+     ══════════════════════════════════════════════════════════════════════ -->
+
+<div id="loading" class="overlay">
+    <h2>PHOSPHENES</h2>
+    <div id="loading-status">Loading…</div>
+    <div id="loading-bar"><i></i></div>
+</div>
+
+<!-- ── Cold open: the argument, before the instrument ──────────────── -->
+<div id="cold-open" class="overlay hidden">
+    <div class="overlay-card">
+        <h1>PHOSPHENES</h1>
+
+        <p>
+            This website is a prototype of Phosphenes, a mechanistic interpretability
+            visualization tool for observational science and hypothesis development.
+        </p>
+
+        <div class="actions">
+            <button class="pbtn primary" id="co-tour">Take the guided tour</button>
+            <button class="pbtn" id="co-begin">Just show me</button>
+            <a class="pbtn ghost" href="about.html">Read the full argument →</a>
+        </div>
+    </div>
+</div>
+
+<!-- ── Session picker ──────────────────────────────────────────────── -->
+<div id="session-picker" class="overlay hidden">
+    <button class="dismiss" data-close="session-picker">close</button>
+    <div class="overlay-card">
+        <h2>Sessions</h2>
+        <div id="session-list"></div>
+        <p class="picker-note" id="session-note"></p>
+    </div>
+</div>
+
+<!-- ── Help ────────────────────────────────────────────────────────── -->
+<div id="help" class="overlay hidden">
+    <button class="dismiss" data-close="help">close</button>
+    <div class="overlay-card">
+        <h2>Keyboard</h2>
+        <div class="cols">
+            <div class="section">Playback</div>
+            <div class="row"><kbd>Space</kbd> play / pause</div>
+            <div class="row"><kbd>← →</kbd> step one token</div>
+            <div class="row"><kbd>↑ ↓</kbd> faster / slower</div>
+            <div class="row"><kbd>[ ]</kbd> previous / next turn</div>
+            <div class="row"><kbd>, .</kbd> previous / next seam</div>
+            <div class="row"><kbd>Home</kbd> back to the start</div>
+
+            <div class="section">Colour</div>
+            <div class="row"><kbd>M</kbd> cycle colour mode</div>
+            <div class="row"><kbd>P</kbd> reference-point mode</div>
+            <div class="row"><kbd>C</kbd> custom colour basis</div>
+            <div class="row"><kbd>I</kbd> inspector on / off</div>
+
+            <div class="section">Custom basis</div>
+            <div class="row"><kbd>Click</kbd> add a source cell</div>
+            <div class="row"><kbd>Shift-click</kbd> add a contrast cell</div>
+            <div class="row"><kbd>Enter</kbd> confirm this axis</div>
+            <div class="row"><kbd>Z</kbd> undo last cell</div>
+            <div class="row"><kbd>Esc</kbd> cancel</div>
+
+            <div class="section">View</div>
+            <div class="row"><kbd>1–8</kbd> switch session</div>
+            <div class="row"><kbd>S</kbd> session picker</div>
+            <div class="row"><kbd>Tab</kbd> transcript on / off</div>
+            <div class="row"><kbd>T</kbd> turn markers on / off</div>
+            <div class="row"><kbd>L</kbd> legend on / off</div>
+            <div class="row"><kbd>G</kbd> guided tour</div>
+            <div class="row"><kbd>H</kbd> this list</div>
+
+            <div class="note">
+                Everything the display encodes is also readable as a number: turn on the
+                inspector and hover any cell. Nothing here is visible only through the picture.
+            </div>
+        </div>
+    </div>
+</div>
+
+<noscript>
+    <div style="padding:40px; max-width:620px; margin:0 auto; line-height:1.7; font-family:Menlo,monospace; color:#e6e6f0">
+        <h1 style="color:#ffc864; letter-spacing:5px; font-weight:400">PHOSPHENES</h1>
+        <p style="margin-top:18px">
+            This is an interactive visualisation of a language model's internal states, and it
+            needs JavaScript. The argument behind it does not —
+            <a href="about.html" style="color:#ffc864">read that instead</a>.
+        </p>
+    </div>
+</noscript>
+
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
